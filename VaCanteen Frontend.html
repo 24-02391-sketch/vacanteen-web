@@ -843,11 +843,11 @@ function openDialog(id) {
     x.classList.remove('open');
     x.setAttribute('aria-hidden','true');
   });
-
-  const target = $(document.getElementById);
-  target.classList.add('open');
-  target.setAttribute('aria-hidden','false');
-  document.body.style.overflow = 'hidden';
+  const backdrop = document.getElementById(id);
+  if (backdrop) {
+    backdrop.classList.add('open');
+    backdrop.setAttribute('aria-hidden','false');
+  }
 }
 
 function closeDialogs() {
