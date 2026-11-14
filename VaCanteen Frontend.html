@@ -1196,6 +1196,15 @@ function updateSeatSelectionState() {
 function releaseSession(sessionToRelease) {
   if (!sessionToRelease) return;
 
+  fetch('/api/leave', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      id: sessionToRelease.id,
+      sr_code: sessionToRelease.srCode
+    })
+  }).catch(err => console.error('Leave sync error:', err));
+
   sessions = sessions.filter(
     s => s.id !== sessionToRelease.id
   );
@@ -1206,7 +1215,7 @@ function releaseSession(sessionToRelease) {
 
   if (t) {
     t.occupied = Math.max(
-      0,t.occupied-sessionToRelease.seats
+      0, t.occupied - sessionToRelease.seats
     );
   }
 
@@ -1216,26 +1225,70 @@ function releaseSession(sessionToRelease) {
   ) {
     userActiveSession = null;
     pendingSession = null;
+    localStorage.removeItem('vacanteen_my_session');
   }
 
   renderMap();
   closeDialogs();
 }
 
+// Load saved bookings from Python backend
+function syncFromServer() {
+  fetch('/api/state')
+    .then(res => res.json())
+    .then(data => {
+      const serverSessions = data.sessions || [];
+
+      tables.forEach(t => {
+        t.occupied = 0;
+      });
+
+      serverSessions.forEach(s => {
+        const t = tables.find(tbl => tbl.id === s.tableId);
+        if (t) {
+          t.occupied = Math.min(CAPACITY, t.occupied + s.seats);
+        }
+      });
+
+      sessions = serverSessions;
+      if (sessions.length > 0) {
+        hasOccupancyActivity = true;
+      }
+
+      const savedMyId = localStorage.getItem('vacanteen_my_session');
+      if (savedMyId) {
+        const foundMine = sessions.find(s => s.id === savedMyId);
+        if (foundMine) {
+          userActiveSession = foundMine;
+          pendingSession = foundMine;
+        } else {
+          userActiveSession = null;
+          pendingSession = null;
+          localStorage.removeItem('vacanteen_my_session');
+        }
+      }
+
+      renderMap();
+    })
+    .catch(err => console.error('Sync error:', err));
+}
+
 // Initialize the application
-window.addEventListener('DOMContentLoaded',() => {
+window.addEventListener('DOMContentLoaded', () => {
 
   updateModeUI();
   renderMap();
+  syncFromServer();
+  setInterval(syncFromServer, 5000);
 
   function updateClock() {
     $('headerTime').textContent =
-      new Intl.DateTimeFormat('en-PH',{
-        timeZone:'Asia/Manila',
-        hour:'numeric',
-        minute:'2-digit',
-        second:'2-digit',
-        hour12:true
+      new Intl.DateTimeFormat('en-PH', {
+        timeZone: 'Asia/Manila',
+        hour: 'numeric',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true
       }).format(new Date());
 
     updateModeUI();
@@ -1243,12 +1296,12 @@ window.addEventListener('DOMContentLoaded',() => {
 
     if (pendingSession && pendingSession.seated) {
       const elapsed = Math.max(
-        0,(Date.now()-pendingSession.startedAt)/1000
+        0, (Date.now() - pendingSession.startedAt) / 1000
       );
 
       if (isRushHour()) {
         const remain = Math.max(
-          0,pendingSession.duration*60-elapsed
+          0, pendingSession.duration * 60 - elapsed
         );
         $('sessionClock').textContent = fmtTime(remain);
       } else {
@@ -1258,18 +1311,18 @@ window.addEventListener('DOMContentLoaded',() => {
   }
 
   updateClock();
-  setInterval(updateClock,1000);
+  setInterval(updateClock, 1000);
 
   // Modal close buttons
   document.querySelectorAll('[data-close]').forEach(b => {
-    b.addEventListener('click',closeDialogs);
+    b.addEventListener('click', closeDialogs);
   });
 
   // Filter dropdown
   const filterBtn = $('filterButton');
   const filterMenu = $('filterMenu');
 
-  filterBtn.addEventListener('click',e => {
+  filterBtn.addEventListener('click', e => {
     e.stopPropagation();
 
     const opening =
@@ -1278,57 +1331,57 @@ window.addEventListener('DOMContentLoaded',() => {
     filterMenu.classList.toggle('hidden');
 
     filterBtn.setAttribute(
-      'aria-expanded',String(opening)
+      'aria-expanded', String(opening)
     );
   });
 
-  document.addEventListener('click',() => {
+  document.addEventListener('click', () => {
     filterMenu.classList.add('hidden');
-    filterBtn.setAttribute('aria-expanded','false');
+    filterBtn.setAttribute('aria-expanded', 'false');
   });
 
   filterMenu.addEventListener(
-    'click',e => e.stopPropagation()
+    'click', e => e.stopPropagation()
   );
 
   filterMenu.querySelectorAll('[data-filter]').forEach(b => {
-    b.addEventListener('click',() => {
+    b.addEventListener('click', () => {
       activeFilter = b.dataset.filter;
       $('filterLabel').textContent = b.textContent.trim();
 
       filterMenu.classList.add('hidden');
-      filterBtn.setAttribute('aria-expanded','false');
+      filterBtn.setAttribute('aria-expanded', 'false');
 
       applyFilter();
     });
   });
 
-  $('searchInput').addEventListener('input',applyFilter);
+  $('searchInput').addEventListener('input', applyFilter);
 
   // Select table
-  $('chooseTable').addEventListener('click',() => {
-    if (!selectedTable || available(selectedTable)<=0) {
+  $('chooseTable').addEventListener('click', () => {
+    if (!selectedTable || available(selectedTable) <= 0) {
       return;
     }
 
     $('checkinTitle').textContent =
-      'Table '+pad(selectedTable.id);
+      'Table ' + pad(selectedTable.id);
 
     $('partySize').value = '2';
 
     $('partySize').querySelectorAll('option').forEach(o => {
       o.disabled =
-        Number(o.value)>available(selectedTable);
+        Number(o.value) > available(selectedTable);
     });
 
-    if (available(selectedTable)<2) {
+    if (available(selectedTable) < 2) {
       $('partySize').value = '1';
     }
 
     openDialog('checkinDialog');
   });
 
-  $('backToTable').addEventListener('click',() => {
+  $('backToTable').addEventListener('click', () => {
     openDialog('tableDialog');
   });
 
@@ -1340,8 +1393,8 @@ window.addEventListener('DOMContentLoaded',() => {
       $('formError').textContent = 'Please enter a valid Student SR Code.';
       return;
     }
-    
-    $('formError').textContent = 'Checking database...'; // Loading state
+
+    $('formError').textContent = 'Checking database...';
 
     const party = Number($('partySize').value);
 
@@ -1350,61 +1403,59 @@ window.addEventListener('DOMContentLoaded',() => {
       return;
     }
 
-    // Connect to the Python Data Structures
     fetch('/api/checkin', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sr_code: sr, table_id: selectedTable.id })
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sr_code: sr, table_id: selectedTable.id })
     })
-    .then(response => response.json())
-    .then(data => {
+      .then(response => response.json())
+      .then(data => {
         if (data.status === "error") {
-            // Python's Binary Search Tree found a duplicate! Show error on screen.
-            $('formError').textContent = data.message;
+          $('formError').textContent = data.message;
         } else {
-            // Python successfully checked them in. Proceed to seat map.
-            $('formError').textContent = '';
-            $('seatDialogTitle').textContent = 'Table ' + pad(selectedTable.id);
-            $('seatInfoName').textContent = 'Table ' + pad(selectedTable.id);
-            $('seatInfoCapacity').textContent = CAPACITY + ' seats total capacity';
-            $('groupSummary').textContent = party + ' seat(s)';
-            $('durationSummaryValue').textContent = $('duration').value + ' minutes';
-            setPill($('seatStatus'), status(selectedTable));
-            
-            buildSeatGrid();
-            openDialog('seatsDialog');
+          $('formError').textContent = '';
+          $('seatDialogTitle').textContent = 'Table ' + pad(selectedTable.id);
+          $('seatInfoName').textContent = 'Table ' + pad(selectedTable.id);
+          $('seatInfoCapacity').textContent = CAPACITY + ' seats total capacity';
+          $('groupSummary').textContent = party + ' seat(s)';
+          $('durationSummaryValue').textContent = $('duration').value + ' minutes';
+          setPill($('seatStatus'), status(selectedTable));
+
+          buildSeatGrid();
+          openDialog('seatsDialog');
         }
-    })
-    .catch(error => {
+      })
+      .catch(error => {
         console.error('Backend Error:', error);
         $('formError').textContent = "Cannot connect to server. Is python server.py running?";
-    });
+      });
   });
 
   // Confirm seat selection
-  $('continueSeats').addEventListener('click',() => {
+  $('continueSeats').addEventListener('click', () => {
     const party = Number($('partySize').value);
     const duration = Number($('duration').value);
     const rush = isRushHour();
 
-    if (selectedSeats.size!==party) return;
-    if (party>available(selectedTable)) return;
+    if (selectedSeats.size !== party) return;
+    if (party > available(selectedTable)) return;
 
     pendingSession = {
-      id:'usr_'+Date.now(),
-      tableId:selectedTable.id,
-      seats:party,
-      selectedSeatNumbers:[...selectedSeats],
-      startedAt:Date.now(),
-      duration:rush ? duration : 0,
-      seated:false
+      id: 'usr_' + Date.now(),
+      srCode: $('srCode').value.trim(),
+      tableId: selectedTable.id,
+      seats: party,
+      selectedSeatNumbers: [...selectedSeats],
+      startedAt: Date.now(),
+      duration: rush ? duration : 0,
+      seated: false
     };
 
     $('sessionTableLabel').textContent =
-      'Table '+pad(selectedTable.id);
+      'Table ' + pad(selectedTable.id);
 
     $('sessionSeatsLabel').textContent =
-      party+' seat(s)';
+      party + ' seat(s)';
 
     $('sessionClock').textContent = '00:00:00';
 
@@ -1418,16 +1469,16 @@ window.addEventListener('DOMContentLoaded',() => {
     openDialog('sessionDialog');
   });
 
-  $('backToSeats').addEventListener('click',() => {
+  $('backToSeats').addEventListener('click', () => {
     openDialog('seatsDialog');
   });
 
   // Start occupancy
-  $('seatedButton').addEventListener('click',() => {
+  $('seatedButton').addEventListener('click', () => {
     if (!pendingSession || pendingSession.seated) return;
 
     if (
-      available(selectedTable)<pendingSession.seats
+      available(selectedTable) < pendingSession.seats
     ) {
       return;
     }
@@ -1436,12 +1487,13 @@ window.addEventListener('DOMContentLoaded',() => {
     pendingSession.startedAt = Date.now();
 
     userActiveSession = pendingSession;
+    localStorage.setItem('vacanteen_my_session', pendingSession.id);
 
-    sessions.unshift({...pendingSession});
+    sessions.unshift({ ...pendingSession });
 
     selectedTable.occupied = Math.min(
       CAPACITY,
-      selectedTable.occupied+pendingSession.seats
+      selectedTable.occupied + pendingSession.seats
     );
 
     hasOccupancyActivity = true;
@@ -1452,18 +1504,24 @@ window.addEventListener('DOMContentLoaded',() => {
     $('sessionMessage').textContent =
       `You are currently seated at Table ${pad(selectedTable.id)}. Tap "I’m Leaving" when finished.`;
 
+    fetch('/api/seat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(pendingSession)
+    }).catch(err => console.error('Seat sync error:', err));
+
     renderMap();
   });
 
   // Leave table
-  $('leavingButton').addEventListener('click',() => {
+  $('leavingButton').addEventListener('click', () => {
     if (userActiveSession) {
       releaseSession(userActiveSession);
     }
   });
 
   // Rush-hour expiry
-  $('dismissTimesUp').addEventListener('click',() => {
+  $('dismissTimesUp').addEventListener('click', () => {
     if (userActiveSession) {
       releaseSession(userActiveSession);
     } else {
