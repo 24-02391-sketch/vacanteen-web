@@ -96,13 +96,11 @@ button:disabled { cursor:not-allowed; }
 ::-webkit-scrollbar-thumb { background:#EA8871;border-radius:99px; }
 ::-webkit-scrollbar-thumb:hover { background:#BA1B18; }
 
-/* VaCanteen logo uses Jua */
 .vacanteen-brand {
   font-family:'Jua',sans-serif !important;
   font-weight:400 !important;
 }
 
-/* Preserve monospace clocks */
 .font-mono,
 #headerTime,
 #sessionClock,
@@ -111,200 +109,53 @@ button:disabled { cursor:not-allowed; }
   font-family:Consolas,'Courier New',monospace !important;
 }
 
-/* Font-size settings */
-.text-xs {
-  font-size:.875rem !important;
-  line-height:1.25rem !important;
-}
-.text-sm {
-  font-size:1rem !important;
-  line-height:1.5rem !important;
-}
-.text-base {
-  font-size:1.125rem !important;
-  line-height:1.75rem !important;
-}
-.text-\[10px\] { font-size:12px !important; }
-.text-\[11px\] { font-size:13px !important; }
+.text-xs { font-size:.875rem !important; line-height:1.25rem !important; }
+.text-sm { font-size:1rem !important; line-height:1.5rem !important; }
+.text-base { font-size:1.125rem !important; line-height:1.75rem !important; }
 
-/* Percentage progress bars */
 .metric-progress {
-  width:100%;
-  height:15px;
-  background:#F9EEC7;
-  border-radius:999px;
-  overflow:hidden;
-  position:relative;
-  margin-top:14px;
+  width:100%; height:15px; background:#F9EEC7; border-radius:999px; overflow:hidden; position:relative; margin-top:14px;
 }
-
 .metric-progress-fill {
-  display:block;
-  height:100%;
-  width:0%;
-  border-radius:999px;
-  transition:width .55s ease-in-out;
-  position:relative;
-  z-index:1;
+  display:block; height:100%; width:0%; border-radius:999px; transition:width .55s ease-in-out; position:relative; z-index:1;
 }
-
-#tableProgress {
-  background:linear-gradient(
-    90deg,#BA1B18 0%,#731B17 65%,#351710 100%
-  ) !important;
-}
-
-#seatProgress {
-  background:linear-gradient(
-    90deg,#10b981 0%,#047857 100%
-  ) !important;
-}
+#tableProgress { background:linear-gradient(90deg,#BA1B18 0%,#731B17 65%,#351710 100%) !important; }
+#seatProgress { background:linear-gradient(90deg,#10b981 0%,#047857 100%) !important; }
 
 .metric-percent {
-  display:inline-flex;
-  justify-content:center;
-  align-items:center;
-  padding:6px 14px;
-  background:#ecfdf5;
-  color:#047857;
-  font-weight:800;
-  font-size:16px;
-  border-radius:999px;
-  white-space:nowrap;
+  display:inline-flex; justify-content:center; align-items:center; padding:6px 14px; background:#ecfdf5; color:#047857; font-weight:800; font-size:16px; border-radius:999px; white-space:nowrap;
 }
 
-/* Original minimap table nodes */
 .table-dot {
-  position:absolute;
-  z-index:10;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  width:clamp(42px,4.8cqw,56px);
-  height:clamp(42px,4.8cqw,56px);
-  transform:translate(-50%,-50%);
-  border-radius:50%;
-  color:#ffffff;
-  font-family:'Poppins',sans-serif;
-  font-weight:800;
-  font-size:clamp(14px,1.35cqw,16px);
-  border:3px solid #ffffff;
-  box-shadow:0 6px 18px rgba(0,0,0,.18);
-  transition:all .25s cubic-bezier(.34,1.56,.64,1);
-  cursor:pointer;
+  position:absolute; z-index:10; display:flex; align-items:center; justify-content:center; width:clamp(42px,4.8cqw,56px); height:clamp(42px,4.8cqw,56px); transform:translate(-50%,-50%); border-radius:50%; color:#ffffff; font-family:'Poppins',sans-serif; font-weight:800; font-size:clamp(14px,1.35cqw,16px); border:3px solid #ffffff; box-shadow:0 6px 18px rgba(0,0,0,.18); transition:all .25s cubic-bezier(.34,1.56,.64,1); cursor:pointer;
 }
+.table-dot:hover { transform:translate(-50%,-50%) scale(1.22); z-index:25; box-shadow:0 10px 25px rgba(0,0,0,.3); }
 
-.table-dot:hover {
-  transform:translate(-50%,-50%) scale(1.22);
-  z-index:25;
-  box-shadow:0 10px 25px rgba(0,0,0,.3);
-}
+.table-dot.available { background:linear-gradient(135deg,#10b981,#047857); box-shadow:0 6px 18px rgba(16,185,129,.45); }
+.table-dot.available:hover { box-shadow:0 0 24px rgba(16,185,129,.8); }
+.table-dot.partial { background:linear-gradient(135deg,#f59e0b,#b45309); box-shadow:0 6px 18px rgba(245,158,11,.45); }
+.table-dot.partial:hover { box-shadow:0 0 24px rgba(245,158,11,.8); }
+.table-dot.unavailable { background:linear-gradient(135deg,#f43f5e,#be123c); box-shadow:0 6px 18px rgba(244,63,94,.38); }
+.table-dot.unavailable:hover { box-shadow:0 0 24px rgba(244,63,94,.75); }
 
-.table-dot.available {
-  background:linear-gradient(135deg,#10b981,#047857);
-  box-shadow:0 6px 18px rgba(16,185,129,.45);
-}
-.table-dot.available:hover {
-  box-shadow:0 0 24px rgba(16,185,129,.8);
-}
-
-.table-dot.partial {
-  background:linear-gradient(135deg,#f59e0b,#b45309);
-  box-shadow:0 6px 18px rgba(245,158,11,.45);
-}
-.table-dot.partial:hover {
-  box-shadow:0 0 24px rgba(245,158,11,.8);
-}
-
-.table-dot.unavailable {
-  background:linear-gradient(135deg,#f43f5e,#be123c);
-  box-shadow:0 6px 18px rgba(244,63,94,.38);
-}
-.table-dot.unavailable:hover {
-  box-shadow:0 0 24px rgba(244,63,94,.75);
-}
-
-/* Minimap architecture */
 .grid-pattern { stroke:#ebdcd8;stroke-width:.9; }
 .fixture-shape { fill:#eae0dd;stroke:#d3c2be;stroke-width:1.2; }
-.zone-label {
-  font-family:'Poppins',sans-serif;
-  font-weight:800;
-  fill:#9e8e91;
-  letter-spacing:.18em;
-}
+.zone-label { font-family:'Poppins',sans-serif; font-weight:800; fill:#9e8e91; letter-spacing:.18em; }
 
-/* Modal animation */
-.backdrop {
-  opacity:0;
-  pointer-events:none;
-  transition:opacity .25s ease-in-out;
-}
+.backdrop { opacity:0; pointer-events:none; transition:opacity .25s ease-in-out; }
+.backdrop.open { opacity:1; pointer-events:auto; }
+.backdrop .dialog-content { transform:translateY(22px) scale(.96); transition:transform .28s cubic-bezier(.16,1,.3,1); }
+.backdrop.open .dialog-content { transform:translateY(0) scale(1); }
 
-.backdrop.open {
-  opacity:1;
-  pointer-events:auto;
-}
-
-.backdrop .dialog-content {
-  transform:translateY(22px) scale(.96);
-  transition:transform .28s cubic-bezier(.16,1,.3,1);
-}
-
-.backdrop.open .dialog-content {
-  transform:translateY(0) scale(1);
-}
-
-/* Active Occupancy Timer header */
-.occupancy-header {
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:5px;
-  min-width:0;
-  padding:12px 10px;
-}
-
-.occupancy-heading-group {
-  display:flex;
-  align-items:center;
-  gap:6px;
-  min-width:0;
-  flex:1 1 auto;
-}
-
-.occupancy-icon {
-  width:15px;
-  height:15px;
-  flex-shrink:0;
-}
-
-#occupancyTitle {
-  font-family:'Poppins',sans-serif !important;
-  font-size:clamp(12px,1.15vw,16px) !important;
-  font-weight:800;
-  line-height:1.2 !important;
-  letter-spacing:-.5px;
-  white-space:nowrap;
-  margin:0;
-}
-
-#activeCount {
-  font-family:'Poppins',sans-serif !important;
-  font-size:10px !important;
-  line-height:1 !important;
-  font-weight:800;
-  white-space:nowrap;
-  flex-shrink:0;
-  padding:6px 7px;
-}
-
+.occupancy-header { display:flex; align-items:center; justify-content:space-between; gap:5px; min-width:0; padding:12px 10px; }
+.occupancy-heading-group { display:flex; align-items:center; gap:6px; min-width:0; flex:1 1 auto; }
+.occupancy-icon { width:15px; height:15px; flex-shrink:0; }
+#occupancyTitle { font-family:'Poppins',sans-serif !important; font-size:clamp(12px,1.15vw,16px) !important; font-weight:800; line-height:1.2 !important; letter-spacing:-.5px; white-space:nowrap; margin:0; }
+#activeCount { font-family:'Poppins',sans-serif !important; font-size:10px !important; line-height:1 !important; font-weight:800; white-space:nowrap; flex-shrink:0; padding:6px 7px; }
 #activeCount.hidden { display:none; }
 
 @media(max-width:640px) {
-  #occupancyTitle {
-    font-size:clamp(9px,2.5vw,13px) !important;
-  }
+  #occupancyTitle { font-size:clamp(9px,2.5vw,13px) !important; }
   .occupancy-header { gap:4px; }
 }
 </style>
@@ -326,7 +177,6 @@ button:disabled { cursor:not-allowed; }
           <circle cx="32" cy="14" r="3.5" fill="currentColor" stroke="none"/>
         </svg>
       </div>
-
       <div class="flex flex-col">
         <span class="vacanteen-brand text-2xl sm:text-3xl tracking-wider bg-clip-text text-transparent bg-gradient-to-r from-maroon-950 via-maroon-800 to-maroon-600 leading-none">VaCanteen</span>
       </div>
@@ -345,24 +195,33 @@ button:disabled { cursor:not-allowed; }
           </svg>
         </button>
 
-        <div id="filterMenu" class="hidden absolute left-0 mt-2 w-56 bg-white rounded-2xl border border-canteen-border shadow-modal p-2 z-50">
-          <button type="button" data-filter="all" class="w-full text-left px-4 py-2.5 rounded-xl text-xs font-extrabold text-canteen-ink hover:bg-maroon-50 flex items-center justify-between">
+        <!-- UPDATED FILTER MENU WITH SEATS -->
+        <div id="filterMenu" class="hidden absolute left-0 mt-2 w-56 bg-white rounded-2xl border border-canteen-border shadow-modal py-2 z-50 overflow-hidden">
+          <div class="px-4 py-1.5 text-[10px] font-black text-canteen-muted uppercase tracking-widest bg-canteen-paper mb-1">Status</div>
+          <button type="button" data-filter="all" class="w-full text-left px-4 py-2.5 text-xs font-extrabold text-canteen-ink hover:bg-maroon-50 flex items-center justify-between">
             All Tables <span class="w-2.5 h-2.5 rounded-full bg-slate-300"></span>
           </button>
-          <button type="button" data-filter="available" class="w-full text-left px-4 py-2.5 rounded-xl text-xs font-extrabold text-canteen-ink hover:bg-emerald-50 flex items-center justify-between">
+          <button type="button" data-filter="available" class="w-full text-left px-4 py-2.5 text-xs font-extrabold text-canteen-ink hover:bg-emerald-50 flex items-center justify-between">
             Available <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
           </button>
-          <button type="button" data-filter="partial" class="w-full text-left px-4 py-2.5 rounded-xl text-xs font-extrabold text-canteen-ink hover:bg-amber-50 flex items-center justify-between">
+          <button type="button" data-filter="partial" class="w-full text-left px-4 py-2.5 text-xs font-extrabold text-canteen-ink hover:bg-amber-50 flex items-center justify-between">
             Partially Open <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
           </button>
-          <button type="button" data-filter="unavailable" class="w-full text-left px-4 py-2.5 rounded-xl text-xs font-extrabold text-canteen-ink hover:bg-rose-50 flex items-center justify-between">
+          <button type="button" data-filter="unavailable" class="w-full text-left px-4 py-2.5 text-xs font-extrabold text-canteen-ink hover:bg-rose-50 flex items-center justify-between">
             Fully Occupied <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
           </button>
+
+          <div class="px-4 py-1.5 text-[10px] font-black text-canteen-muted uppercase tracking-widest bg-canteen-paper mt-2 mb-1">By Available Seats</div>
+          <button type="button" data-filter="seats-1" class="w-full text-left px-4 py-2 text-xs font-extrabold text-canteen-ink hover:bg-maroon-50">1+ Seats</button>
+          <button type="button" data-filter="seats-2" class="w-full text-left px-4 py-2 text-xs font-extrabold text-canteen-ink hover:bg-maroon-50">2+ Seats</button>
+          <button type="button" data-filter="seats-3" class="w-full text-left px-4 py-2 text-xs font-extrabold text-canteen-ink hover:bg-maroon-50">3+ Seats</button>
+          <button type="button" data-filter="seats-4" class="w-full text-left px-4 py-2 text-xs font-extrabold text-canteen-ink hover:bg-maroon-50">4+ Seats</button>
+          <button type="button" data-filter="seats-5" class="w-full text-left px-4 py-2 text-xs font-extrabold text-canteen-ink hover:bg-maroon-50">5+ Seats</button>
+          <button type="button" data-filter="seats-6" class="w-full text-left px-4 py-2 text-xs font-extrabold text-canteen-ink hover:bg-maroon-50">6 Seats (Empty)</button>
         </div>
       </div>
 
-      <div class="flex-1 relative flex items-center min-w-0 gap-2">
-        <!-- Search Bar -->
+      <div class="flex-1 relative flex items-center min-w-0">
         <div class="relative w-full">
           <svg class="w-4 h-4 text-canteen-muted absolute left-3.5 top-3 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
             <circle cx="11" cy="11" r="7"/>
@@ -370,17 +229,6 @@ button:disabled { cursor:not-allowed; }
           </svg>
           <input id="searchInput" type="search" placeholder="Search table..." class="w-full h-10 pl-9 pr-3 rounded-xl bg-white border border-canteen-border text-xs sm:text-sm font-semibold text-canteen-ink focus:outline-none focus:border-maroon-600 focus:ring-2 focus:ring-maroon-600/20 shadow-sm">
         </div>
-        
-        <!-- UPDATED: Added Seat Number Filter -->
-        <select id="seatFilter" class="h-10 px-3 rounded-xl bg-white border border-canteen-border text-xs sm:text-sm font-semibold text-canteen-ink focus:outline-none focus:border-maroon-600 focus:ring-2 focus:ring-maroon-600/20 shadow-sm cursor-pointer shrink-0">
-          <option value="0">Any Seats</option>
-          <option value="1">1+ Seats</option>
-          <option value="2">2+ Seats</option>
-          <option value="3">3+ Seats</option>
-          <option value="4">4+ Seats</option>
-          <option value="5">5+ Seats</option>
-          <option value="6">Empty (6 Seats)</option>
-        </select>
       </div>
     </div>
 
@@ -399,18 +247,13 @@ button:disabled { cursor:not-allowed; }
 
 <!-- MAIN CONTENT -->
 <main class="max-w-[1580px] mx-auto w-full px-4 sm:px-6 lg:px-10 py-6 sm:py-8 flex-1">
-
-  <!-- Main Heading and Schedule -->
   <section class="mb-6">
     <h1 class="text-3xl sm:text-4xl lg:text-5xl font-display font-black text-maroon-950 tracking-tight">
       VaCanteen: A Canteen Seating Availability System
     </h1>
-
     <p class="text-sm sm:text-base text-canteen-muted mt-1.5 font-medium">
       Find an open table, select your seats, or check active seating times live.
     </p>
-
-    <!-- System Schedule -->
     <div class="mt-4 inline-flex max-w-full px-4 py-2.5 rounded-2xl bg-white border border-canteen-border shadow-sm items-center gap-3">
       <div class="w-3 h-3 shrink-0 rounded-full bg-maroon-700 animate-pulse"></div>
       <div class="text-xs font-bold text-canteen-muted">
@@ -420,8 +263,6 @@ button:disabled { cursor:not-allowed; }
         </span>
       </div>
     </div>
-
-    <!-- Toast Banner for Auto-Release / System Notices -->
     <div id="systemNotice" class="hidden mt-4 px-4 py-3 rounded-2xl bg-amber-50 border border-amber-300 text-amber-950 text-xs sm:text-sm font-bold flex items-center justify-between gap-3 shadow-sm">
       <span id="systemNoticeText"></span>
       <button type="button" id="closeNoticeBtn" class="text-amber-800 hover:text-amber-950 font-black text-base px-2">×</button>
@@ -429,20 +270,14 @@ button:disabled { cursor:not-allowed; }
   </section>
 
   <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-
     <!-- LEFT COLUMN -->
     <section class="lg:col-span-8 flex flex-col gap-6 min-w-0">
-
-      <!-- Summary Cards -->
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-
-        <!-- Available Tables -->
         <article class="bg-white rounded-3xl border border-canteen-border p-6 shadow-card flex flex-col justify-between relative overflow-hidden group hover:border-maroon-300 transition-all">
           <div class="flex items-center justify-between text-xs font-black text-canteen-muted uppercase tracking-wider mb-2">
             <span>Available Tables</span>
             <span id="openTablePercent" class="metric-percent hidden"></span>
           </div>
-
           <div class="flex items-center gap-4 my-2">
             <div class="w-14 h-14 rounded-2xl bg-maroon-50 text-maroon-800 flex items-center justify-center group-hover:scale-110 transition-transform">
               <svg aria-label="Table icon" class="w-8 h-8" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -455,19 +290,16 @@ button:disabled { cursor:not-allowed; }
               <div id="openTableSub" class="text-xs font-bold text-canteen-muted mt-0.5"></div>
             </div>
           </div>
-
           <div class="metric-progress">
             <div id="tableProgress" class="metric-progress-fill" style="width:0%"></div>
           </div>
         </article>
 
-        <!-- Open Seats -->
         <article class="bg-white rounded-3xl border border-canteen-border p-6 shadow-card flex flex-col justify-between relative overflow-hidden group hover:border-maroon-300 transition-all">
           <div class="flex items-center justify-between text-xs font-black text-canteen-muted uppercase tracking-wider mb-2">
             <span>Available Seats</span>
             <span id="openSeatPercent" class="metric-percent hidden"></span>
           </div>
-
           <div class="flex items-center gap-4 my-2">
             <div class="w-14 h-14 rounded-2xl bg-maroon-50 text-maroon-800 flex items-center justify-center group-hover:scale-110 transition-transform">
               <svg aria-label="Chair icon" class="w-8 h-8" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -480,7 +312,6 @@ button:disabled { cursor:not-allowed; }
               <div id="openSeatSub" class="text-xs font-bold text-canteen-muted mt-0.5"></div>
             </div>
           </div>
-
           <div class="metric-progress">
             <div id="seatProgress" class="metric-progress-fill" style="width:0%"></div>
           </div>
@@ -489,7 +320,6 @@ button:disabled { cursor:not-allowed; }
 
       <!-- Canteen Minimap -->
       <section class="bg-white rounded-3xl border border-canteen-border shadow-card overflow-hidden flex flex-col">
-
         <div class="px-6 py-4 bg-gradient-to-r from-maroon-950 via-maroon-900 to-maroon-800 text-white flex items-center justify-between gap-3">
           <div class="flex items-center gap-3.5 min-w-0">
             <div class="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center backdrop-blur-sm shrink-0">
@@ -507,23 +337,19 @@ button:disabled { cursor:not-allowed; }
               </p>
             </div>
           </div>
-
           <div class="flex items-center gap-2 px-3.5 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-xs font-black tracking-wide uppercase shrink-0">
             <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
             Live Updates
           </div>
         </div>
 
-        <!-- Original Floorplan -->
         <div id="mapStage" class="relative w-full aspect-[1.25/1] min-h-[400px] bg-[#fcf8f7] overflow-hidden select-none" style="container-type:inline-size">
           <svg class="absolute inset-0 w-full h-full" viewBox="0 0 1000 800" preserveAspectRatio="none" aria-label="Canteen floor plan">
             <rect width="1000" height="800" fill="#fdfaf9"/>
-
             <g class="grid-pattern">
               <path d="M0 80H1000M0 160H1000M0 240H1000M0 320H1000M0 400H1000M0 480H1000M0 560H1000M0 640H1000M0 720H1000"/>
               <path d="M100 0V800M200 0V800M300 0V800M400 0V800M500 0V800M600 0V800M700 0V800M800 0V800M900 0V800"/>
             </g>
-
             <g class="fixture-shape">
               <rect x="0" y="0" width="78" height="25" rx="3"/>
               <rect x="86" y="0" width="110" height="25" rx="3"/>
@@ -532,29 +358,23 @@ button:disabled { cursor:not-allowed; }
               <rect x="550" y="0" width="110" height="25" rx="3"/>
               <rect x="670" y="0" width="110" height="25" rx="3"/>
               <rect x="790" y="0" width="120" height="25" rx="3"/>
-
               <rect x="0" y="210" width="27" height="180" rx="4"/>
               <rect x="328" y="180" width="72" height="75" rx="6"/>
               <rect x="536" y="190" width="72" height="66" rx="6"/>
               <rect x="328" y="340" width="72" height="105" rx="6"/>
               <rect x="536" y="455" width="72" height="70" rx="6"/>
-
               <rect x="0" y="458" width="405" height="22" rx="4"/>
               <rect x="0" y="492" width="396" height="45" rx="4"/>
               <rect x="0" y="545" width="398" height="43" rx="4"/>
               <rect x="0" y="598" width="398" height="43" rx="4"/>
-
               <rect x="398" y="770" width="190" height="30" rx="4"/>
               <rect x="630" y="774" width="115" height="26" rx="4"/>
               <rect x="755" y="774" width="112" height="26" rx="4"/>
               <rect x="878" y="774" width="122" height="26" rx="4"/>
             </g>
-
             <text x="493" y="792" text-anchor="middle" class="zone-label" font-size="13">ENTRANCE</text>
           </svg>
         </div>
-
-        <!-- Availability Legend -->
         <div class="px-6 py-4 bg-white border-t border-canteen-border flex flex-wrap items-center justify-between gap-4 text-xs font-black text-canteen-muted">
           <div class="flex items-center gap-7">
             <span class="flex items-center gap-2.5">
@@ -579,8 +399,6 @@ button:disabled { cursor:not-allowed; }
 
     <!-- RIGHT SIDEBAR -->
     <aside class="lg:col-span-4 flex flex-col gap-6 min-w-0">
-
-      <!-- Active Occupancy Timer -->
       <section class="bg-white rounded-3xl border border-canteen-border shadow-card overflow-hidden flex flex-col min-w-0">
         <div class="occupancy-header bg-gradient-to-r from-maroon-950 to-maroon-800 text-white">
           <div class="occupancy-heading-group">
@@ -594,11 +412,9 @@ button:disabled { cursor:not-allowed; }
           </div>
           <span id="activeCount" class="hidden rounded-full bg-white/15 border border-white/20 text-white font-black uppercase whitespace-nowrap shrink-0"></span>
         </div>
-
         <div id="sessionList" class="p-4 flex flex-col gap-3.5 min-h-[250px] max-h-[520px] overflow-y-auto bg-canteen-bg"></div>
       </section>
 
-      <!-- Quick Guide -->
       <section class="bg-white rounded-3xl border border-canteen-border p-6 shadow-card flex flex-col gap-3.5">
         <h3 class="text-xs font-display font-black text-canteen-muted uppercase tracking-wider">Quick Guide</h3>
         <ul class="flex flex-col gap-3 text-xs sm:text-sm font-semibold text-canteen-ink">
@@ -608,7 +424,7 @@ button:disabled { cursor:not-allowed; }
           </li>
           <li class="flex items-start gap-3">
             <span class="w-6 h-6 rounded-xl bg-maroon-100 text-maroon-800 font-extrabold flex items-center justify-center text-xs shrink-0 mt-0.5">2</span>
-            <span>Enter your Student SR Code (e.g. <strong>24-12345</strong>) and canteen access password, then pick your seats.</span>
+            <span>Enter your Student SR Code (e.g. <strong>24-12345</strong>) and password, then pick your seats.</span>
           </li>
           <li class="flex items-start gap-3">
             <span class="w-6 h-6 rounded-xl bg-maroon-100 text-maroon-800 font-extrabold flex items-center justify-center text-xs shrink-0 mt-0.5">3</span>
@@ -620,14 +436,13 @@ button:disabled { cursor:not-allowed; }
   </div>
 </main>
 
+<!-- MODALS -->
 <!-- MODAL 1: TABLE DETAILS -->
 <div id="tableDialog" class="backdrop fixed inset-0 z-50 flex items-center justify-center p-4 bg-maroon-950/65 backdrop-blur-md" aria-hidden="true">
   <div class="dialog-content relative w-full max-w-md bg-white rounded-3xl border border-canteen-border p-7 shadow-modal overflow-hidden">
     <button type="button" data-close class="absolute top-4 right-4 w-9 h-9 rounded-full bg-canteen-paper text-canteen-muted hover:text-maroon-900 flex items-center justify-center font-black text-xl" aria-label="Close">×</button>
     <div class="text-xs font-black text-maroon-700 uppercase tracking-widest mb-1">Table Details</div>
-    <div class="w-full h-1.5 bg-canteen-paper rounded-full mb-5 overflow-hidden">
-      <div class="w-1/3 h-full bg-maroon-700"></div>
-    </div>
+    <div class="w-full h-1.5 bg-canteen-paper rounded-full mb-5 overflow-hidden"><div class="w-1/3 h-full bg-maroon-700"></div></div>
     <h2 id="tableTitle" class="text-3xl font-display font-black text-maroon-950">Table --</h2>
     <p class="text-sm text-canteen-muted mt-1 mb-6 font-medium">Review current seat availability at this table.</p>
     <div class="flex items-center justify-between p-5 rounded-2xl bg-canteen-paper border border-canteen-border mb-6">
@@ -642,14 +457,12 @@ button:disabled { cursor:not-allowed; }
   </div>
 </div>
 
-<!-- MODAL 2: CHECK IN (WITH PASSWORD VERIFICATION) -->
+<!-- MODAL 2: CHECK IN -->
 <div id="checkinDialog" class="backdrop fixed inset-0 z-50 flex items-center justify-center p-4 bg-maroon-950/65 backdrop-blur-md" aria-hidden="true">
   <div class="dialog-content relative w-full max-w-md bg-white rounded-3xl border border-canteen-border p-7 shadow-modal overflow-hidden">
     <button type="button" data-close class="absolute top-4 right-4 w-9 h-9 rounded-full bg-canteen-paper text-canteen-muted hover:text-maroon-900 flex items-center justify-center font-black text-xl" aria-label="Close">×</button>
     <div class="text-xs font-black text-maroon-700 uppercase tracking-widest mb-1">Step 2: Check In</div>
-    <div class="w-full h-1.5 bg-canteen-paper rounded-full mb-5 overflow-hidden">
-      <div class="w-2/3 h-full bg-maroon-700"></div>
-    </div>
+    <div class="w-full h-1.5 bg-canteen-paper rounded-full mb-5 overflow-hidden"><div class="w-2/3 h-full bg-maroon-700"></div></div>
     <h2 id="checkinTitle" class="text-3xl font-display font-black text-maroon-950">Table Details</h2>
     <p class="text-sm text-canteen-muted mt-1 mb-5 font-medium">Enter your student ID, canteen password, and group details.</p>
     <div class="space-y-4 mb-6">
@@ -698,9 +511,7 @@ button:disabled { cursor:not-allowed; }
   <div class="dialog-content relative w-full max-w-2xl bg-white rounded-3xl border border-canteen-border p-7 sm:p-8 shadow-modal overflow-hidden">
     <button type="button" data-close class="absolute top-4 right-4 w-9 h-9 rounded-full bg-canteen-paper text-canteen-muted hover:text-maroon-900 flex items-center justify-center font-black text-xl" aria-label="Close">×</button>
     <div class="text-xs font-black text-maroon-700 uppercase tracking-widest mb-1">Step 3: Select Seats</div>
-    <div class="w-full h-1.5 bg-canteen-paper rounded-full mb-6 overflow-hidden">
-      <div class="w-full h-full bg-maroon-700"></div>
-    </div>
+    <div class="w-full h-1.5 bg-canteen-paper rounded-full mb-6 overflow-hidden"><div class="w-full h-full bg-maroon-700"></div></div>
     <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
       <section class="md:col-span-7 bg-canteen-paper rounded-2xl border border-canteen-border p-5">
         <div class="flex items-center justify-between mb-4">
@@ -735,7 +546,7 @@ button:disabled { cursor:not-allowed; }
   </div>
 </div>
 
-<!-- MODAL 4: SESSION TIMER (LOCKED WHEN SEATED) -->
+<!-- MODAL 4: SESSION TIMER -->
 <div id="sessionDialog" class="backdrop fixed inset-0 z-50 flex items-center justify-center p-4 bg-maroon-950/70 backdrop-blur-md" aria-hidden="true">
   <div class="dialog-content relative w-full max-w-lg bg-white rounded-3xl border border-canteen-border p-8 shadow-modal text-center overflow-hidden">
     <button type="button" id="sessionCloseBtn" data-close class="absolute top-4 right-4 w-9 h-9 rounded-full bg-canteen-paper text-canteen-muted hover:text-maroon-900 flex items-center justify-center font-black text-xl" aria-label="Close">×</button>
@@ -745,7 +556,7 @@ button:disabled { cursor:not-allowed; }
       <span id="sessionHeadingText">Session Timer</span>
     </div>
     <div id="sessionTimerSubLabel" class="text-xs font-black uppercase tracking-widest text-maroon-700">Elapsed Seating Time</div>
-    <div id="sessionClock" class="font-mono font-black text-6xl sm:text-7xl tracking-tight text-maroon-950 my-4">00:00:00</div>
+    <div id="sessionClock" class="font-mono font-black text-6xl sm:text-7xl tracking-tight text-maroon-950 my-4 transition-colors">00:00:00</div>
     <div class="flex justify-center gap-12 text-xs font-black text-canteen-muted uppercase tracking-wider mb-6">
       <span>Hours</span><span>Minutes</span><span>Seconds</span>
     </div>
@@ -796,11 +607,9 @@ button:disabled { cursor:not-allowed; }
 <script>
 const CAPACITY = 6;
 const ACCESS_PASSWORD = 'batstateu';
-// UPDATED: Changed from 20 * 60 to 3 * 60 (3 minutes for testing)
 const REGULAR_IDLE_PROMPT_SEC = 3 * 60; 
 const STILL_THERE_GRACE_SEC = 60;        
 
-// Original table positions + exact occupiedSeats tracking
 const baseTables = [
   {id:1,x:58.5,y:79.0,occupied:0,occupiedSeats:[]},
   {id:2,x:69.2,y:79.0,occupied:0,occupiedSeats:[]},
@@ -848,45 +657,30 @@ let stillThereDeadline = null;
 const $ = id => document.getElementById(id);
 const pad = n => String(n).padStart(2,'0');
 
-function isValidSRCode(sr) {
-  return /^\d{2}-\d{5}$/.test(sr) && sr !== '00-00000';
-}
+function isValidSRCode(sr) { return /^\d{2}-\d{5}$/.test(sr) && sr !== '00-00000'; }
 
 function isRushHour() {
   const parts = new Intl.DateTimeFormat('en-US',{
-    timeZone:'Asia/Manila',
-    hour:'numeric',
-    minute:'numeric',
-    hour12:false
+    timeZone:'Asia/Manila', hour:'numeric', minute:'numeric', hour12:false
   }).formatToParts(new Date());
-
   const p = Object.fromEntries(parts.map(x => [x.type,x.value]));
   const minutes = Number(p.hour)*60 + Number(p.minute);
   return minutes >= 660 && minutes < 780;
 }
 
-function available(t) {
-  return CAPACITY - t.occupiedSeats.length;
-}
-
+function available(t) { return CAPACITY - t.occupiedSeats.length; }
 function status(t) {
   const n = available(t);
-  return n === 0 ? 'unavailable' :
-         n === CAPACITY ? 'available' : 'partial';
+  return n === 0 ? 'unavailable' : n === CAPACITY ? 'available' : 'partial';
 }
 
 function statusText(s) {
-  return s === 'available' ? 'Available' :
-         s === 'partial' ? 'Partially Open' : 'Occupied';
+  return s === 'available' ? 'Available' : s === 'partial' ? 'Partially Open' : 'Occupied';
 }
 
 function setPill(el,s) {
   el.className = 'px-3.5 py-1.5 rounded-full text-xs font-black ' +
-    (s === 'available'
-      ? 'bg-emerald-100 text-emerald-800'
-      : s === 'partial'
-      ? 'bg-amber-100 text-amber-800'
-      : 'bg-rose-100 text-rose-800');
+    (s === 'available' ? 'bg-emerald-100 text-emerald-800' : s === 'partial' ? 'bg-amber-100 text-amber-800' : 'bg-rose-100 text-rose-800');
   el.textContent = statusText(s);
 }
 
@@ -901,9 +695,7 @@ function resetCheckinForm() {
     $('accessPassword').value = '';
     $('accessPassword').type = 'password';
   }
-  if ($('togglePasswordBtn')) {
-    $('togglePasswordBtn').textContent = 'Show';
-  }
+  if ($('togglePasswordBtn')) $('togglePasswordBtn').textContent = 'Show';
   $('formError').textContent = '';
   $('partySize').value = '2';
   $('duration').value = '20';
@@ -912,28 +704,21 @@ function resetCheckinForm() {
 
 function openDialog(id) {
   document.querySelectorAll('.backdrop').forEach(x => {
-    x.classList.remove('open');
-    x.setAttribute('aria-hidden','true');
+    x.classList.remove('open'); x.setAttribute('aria-hidden','true');
   });
   const backdrop = document.getElementById(id);
   if (backdrop) {
-    backdrop.classList.add('open');
-    backdrop.setAttribute('aria-hidden','false');
+    backdrop.classList.add('open'); backdrop.setAttribute('aria-hidden','false');
   }
 }
 
 function closeDialogs(force = false) {
-  if (!force && userActiveSession && userActiveSession.seated) {
-    return;
-  }
+  if (!force && userActiveSession && userActiveSession.seated) return;
   document.querySelectorAll('.backdrop').forEach(x => {
-    x.classList.remove('open');
-    x.setAttribute('aria-hidden','true');
+    x.classList.remove('open'); x.setAttribute('aria-hidden','true');
   });
   document.body.style.overflow = '';
-  if (!userActiveSession) {
-    resetCheckinForm();
-  }
+  if (!userActiveSession) resetCheckinForm();
 }
 
 function fmtTime(sec) {
@@ -967,32 +752,17 @@ function restoreSeatedSessionModal(sessionObj) {
 
   $('sessionCloseBtn').classList.add('hidden');
   $('backToSeats').classList.add('hidden');
-
   $('sessionTableLabel').textContent = 'Table ' + pad(sessionObj.tableId);
-  $('sessionSeatsLabel').textContent =
-    `${sessionObj.seats} seat(s)${formatSeatList(sessionObj.selectedSeatNumbers)}`;
-
+  $('sessionSeatsLabel').textContent = `${sessionObj.seats} seat(s)${formatSeatList(sessionObj.selectedSeatNumbers)}`;
   $('seatedButton').classList.add('hidden');
   $('leavingButton').classList.remove('hidden');
-
-  $('sessionMessage').textContent =
-    `You are currently seated at Table ${pad(sessionObj.tableId)}. Tap "I’m Leaving Table" when finished.`;
-
-  const elapsed = Math.max(0, (Date.now() - sessionObj.startedAt) / 1000);
-  if (isRushHour()) {
-    $('sessionTimerSubLabel').textContent = 'Rush Hour Time Remaining';
-    $('sessionClock').textContent = fmtTime(getSessionRemainingSeconds(sessionObj));
-  } else {
-    $('sessionTimerSubLabel').textContent = 'Elapsed Seating Time';
-    $('sessionClock').textContent = fmtTime(elapsed);
-  }
+  $('sessionMessage').textContent = `You are currently seated at Table ${pad(sessionObj.tableId)}. Tap "I’m Leaving Table" when finished.`;
 
   if (!$('stillThereDialog').classList.contains('open') && !$('timesUpDialog').classList.contains('open')) {
     openDialog('sessionDialog');
   }
 }
 
-// Render minimap 
 function renderMap() {
   const stage = $('mapStage');
   stage.querySelectorAll('.table-dot').forEach(e => e.remove());
@@ -1000,7 +770,6 @@ function renderMap() {
   tables.forEach(t => {
     const b = document.createElement('button');
     const s = status(t);
-
     b.type = 'button';
     b.className = 'table-dot ' + s;
     b.textContent = 'T' + pad(t.id);
@@ -1008,16 +777,10 @@ function renderMap() {
     b.style.top = t.y + '%';
     b.dataset.id = t.id;
     b.dataset.status = s;
-
-    b.setAttribute(
-      'aria-label',
-      `Table ${pad(t.id)}: ${statusText(s)}, ${available(t)} seats open`
-    );
-
+    b.setAttribute('aria-label', `Table ${pad(t.id)}: ${statusText(s)}, ${available(t)} seats open`);
     b.addEventListener('click',() => openTable(t));
     stage.appendChild(b);
   });
-
   applyFilter();
   renderStats();
   renderSessions();
@@ -1026,42 +789,38 @@ function renderMap() {
 function renderStats() {
   const opens = tables.filter(t => available(t) > 0).length;
   const seats = tables.reduce((a,t) => a + available(t),0);
-
   const tp = Math.round((opens / tables.length)*100);
   const sp = Math.round((seats / (tables.length*CAPACITY))*100);
 
   $('openTableCount').textContent = opens;
   $('openSeatCount').textContent = seats;
-
-  $('openTableSub').textContent =
-    `of ${tables.length} tables have open seats`;
-
-  $('openSeatSub').textContent =
-    `of ${tables.length*CAPACITY} seats are currently open`;
-
+  $('openTableSub').textContent = `of ${tables.length} tables have open seats`;
+  $('openSeatSub').textContent = `of ${tables.length*CAPACITY} seats are currently open`;
   $('openTablePercent').textContent = tp + '%';
   $('openSeatPercent').textContent = sp + '%';
-
   $('openTablePercent').classList.remove('hidden');
   $('openSeatPercent').classList.remove('hidden');
-
   $('tableProgress').style.width = tp + '%';
   $('seatProgress').style.width = sp + '%';
 }
 
-// UPDATED: Search and Table Seats Filter Logic
 function applyFilter() {
   const q = $('searchInput').value.trim().toLowerCase();
-  const minSeatsRequired = Number($('seatFilter').value);
 
   document.querySelectorAll('.table-dot').forEach(b => {
     const id = Number(b.dataset.id);
-    const passStatus = activeFilter === 'all' || b.dataset.status === activeFilter;
-    const passSearch = !q || ('table ' + pad(id) + ' t' + id).toLowerCase().includes(q);
-    
     const t = tables.find(tbl => tbl.id === id);
-    const passSeats = available(t) >= minSeatsRequired;
+    let passStatus = true;
+    let passSeats = true;
 
+    if (activeFilter === 'available' || activeFilter === 'partial' || activeFilter === 'unavailable') {
+        passStatus = (b.dataset.status === activeFilter);
+    } else if (activeFilter.startsWith('seats-')) {
+        const seatReq = Number(activeFilter.split('-')[1]);
+        passSeats = available(t) >= seatReq;
+    }
+    
+    const passSearch = !q || ('table ' + pad(id) + ' t' + id).toLowerCase().includes(q);
     b.style.display = (passStatus && passSearch && passSeats) ? 'flex' : 'none';
   });
 }
@@ -1071,46 +830,29 @@ function openTable(t) {
     restoreSeatedSessionModal(userActiveSession);
     return;
   }
-
   resetCheckinForm();
   selectedTable = t;
-
   $('tableTitle').textContent = 'Table ' + pad(t.id);
-
-  $('tableAvailable').textContent =
-    available(t) + ' ' +
-    (available(t) === 1 ? 'seat' : 'seats');
-
+  $('tableAvailable').textContent = available(t) + ' ' + (available(t) === 1 ? 'seat' : 'seats');
   setPill($('tableStatus'),status(t));
   $('chooseTable').disabled = available(t) === 0;
-
   openDialog('tableDialog');
 }
 
 function updateModeUI() {
   const rush = isRushHour();
-
-  $('headerModeBadge').textContent = rush
-    ? 'RUSH HOUR (11am-1pm)'
-    : 'REGULAR HOURS';
-
+  $('headerModeBadge').textContent = rush ? 'RUSH HOUR (11am-1pm)' : 'REGULAR HOURS';
   $('headerModeBadge').className = rush
     ? 'px-3 py-1 rounded-full text-xs font-black bg-rose-100 text-rose-900 border border-rose-300 animate-pulse'
     : 'px-3 py-1 rounded-full text-xs font-black bg-maroon-100 text-maroon-900';
-
-  $('occupancyTitle').textContent = rush
-    ? 'TIME REMAINING (RUSH HOUR)'
-    : 'ACTIVE OCCUPANCY TIMER';
-
+  $('occupancyTitle').textContent = rush ? 'TIME REMAINING (RUSH HOUR)' : 'ACTIVE OCCUPANCY TIMER';
   $('durationField').hidden = !rush;
   $('durationSummary').hidden = !rush;
 }
 
-// Active occupancy sessions
 function renderSessions() {
   const list = $('sessionList');
   list.innerHTML = '';
-
   const rush = isRushHour();
 
   if (sessions.length === 0) {
@@ -1128,168 +870,107 @@ function renderSessions() {
     return {...s, elapsed, remain};
   });
 
-  if (rush) {
-    processed.sort((a,b) => a.remain - b.remain);
-  } else {
-    processed.sort((a,b) => b.elapsed - a.elapsed);
-  }
+  if (rush) processed.sort((a,b) => a.remain - b.remain);
+  else processed.sort((a,b) => b.elapsed - a.elapsed);
 
   if (rush && userActiveSession) {
     const userS = processed.find(x => x.id === userActiveSession.id);
-    if (userS && userS.remain <= 0) {
-      triggerTimesUp();
-    }
+    if (userS && userS.remain <= 0) triggerTimesUp();
   }
 
   processed.slice(0, 5).forEach((s,idx) => {
     const row = document.createElement('div');
     const isTop = idx === 0;
     const seatLabel = formatSeatList(s.selectedSeatNumbers);
-    
-    // Check if this row belongs to the current user
     const isMySession = userActiveSession && s.id === userActiveSession.id;
 
     if (isTop) {
-      row.className =
-        'p-5 rounded-3xl bg-gradient-to-br from-maroon-900 via-maroon-800 to-maroon-700 text-white border-2 border-maroon-500 shadow-top-card relative overflow-hidden transition-all hover:scale-[1.01]';
+      row.className = 'p-5 rounded-3xl bg-gradient-to-br from-maroon-900 via-maroon-800 to-maroon-700 text-white border-2 border-maroon-500 shadow-top-card relative overflow-hidden transition-all hover:scale-[1.01]';
     } else {
-      row.className =
-        'p-3.5 rounded-2xl bg-white border border-canteen-border flex items-center justify-between shadow-sm hover:border-maroon-200 transition-all';
+      row.className = 'p-3.5 rounded-2xl bg-white border border-canteen-border flex items-center justify-between shadow-sm hover:border-maroon-200 transition-all';
     }
 
-    // UPDATED: Make the sidebar card clickable if it belongs to the current user
     if (isMySession) {
         row.classList.add('cursor-pointer', 'ring-2', 'ring-maroon-300');
         row.title = "Click to open your session timer";
-        row.addEventListener('click', () => {
-            restoreSeatedSessionModal(userActiveSession);
-        });
+        row.addEventListener('click', () => restoreSeatedSessionModal(userActiveSession));
     }
 
     if (isTop) {
       row.innerHTML = `
         <div class="absolute -right-6 -bottom-6 w-24 h-24 rounded-full bg-white/5 pointer-events-none"></div>
-
         <div class="flex items-center justify-between mb-2 gap-2">
-          <span class="px-2.5 py-0.5 rounded-full bg-amber-400 text-maroon-950 text-[10px] font-black uppercase tracking-wider">
-            ${rush ? '⚠️ LEAST TIME LEFT' : '🔥 PRIMARY OCCUPANT'}
-          </span>
-
-          <span class="text-xs font-bold text-maroon-200">
-            ${s.seated ? (isMySession ? 'Your Table (Click to Open)' : 'Checked In') : 'Pending'}
-          </span>
+          <span class="px-2.5 py-0.5 rounded-full bg-amber-400 text-maroon-950 text-[10px] font-black uppercase tracking-wider">${rush ? '⚠️ LEAST TIME LEFT' : '🔥 PRIMARY OCCUPANT'}</span>
+          <span class="text-xs font-bold text-maroon-200">${s.seated ? (isMySession ? 'Your Table (Click to Open)' : 'Checked In') : 'Pending'}</span>
         </div>
-
         <div class="flex items-center justify-between gap-3">
           <div class="flex items-center gap-3 min-w-0">
-            <div class="w-12 h-12 shrink-0 rounded-2xl bg-white text-maroon-950 font-display font-black text-xl flex items-center justify-center shadow-md">
-              T${pad(s.tableId)}
-            </div>
-
+            <div class="w-12 h-12 shrink-0 rounded-2xl bg-white text-maroon-950 font-display font-black text-xl flex items-center justify-center shadow-md">T${pad(s.tableId)}</div>
             <div>
-              <div class="text-sm font-black text-white">
-                Table ${pad(s.tableId)}
-              </div>
-              <div class="text-xs font-semibold text-maroon-200">
-                ${s.seats} Seat(s)${seatLabel}
-              </div>
+              <div class="text-sm font-black text-white">Table ${pad(s.tableId)}</div>
+              <div class="text-xs font-semibold text-maroon-200">${s.seats} Seat(s)${seatLabel}</div>
             </div>
           </div>
-
           <div class="text-right shrink-0">
-            <div class="text-[10px] font-black text-maroon-200 uppercase tracking-widest">
-              ${rush ? 'TIME LEFT' : 'TIME SEATED'}
-            </div>
-            <div class="session-time font-mono font-black text-xl text-amber-300 drop-shadow-sm">
-              ${rush ? fmtTime(s.remain) : fmtTime(s.elapsed)}
-            </div>
+            <div class="text-[10px] font-black text-maroon-200 uppercase tracking-widest">${rush ? 'TIME LEFT' : 'TIME SEATED'}</div>
+            <div class="session-time font-mono font-black text-xl text-amber-300 drop-shadow-sm">${rush ? fmtTime(s.remain) : fmtTime(s.elapsed)}</div>
           </div>
         </div>
       `;
     } else {
       row.innerHTML = `
         <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-xl bg-maroon-50 text-maroon-900 font-display font-black text-sm flex items-center justify-center">
-            T${pad(s.tableId)}
-          </div>
-
+          <div class="w-10 h-10 rounded-xl bg-maroon-50 text-maroon-900 font-display font-black text-sm flex items-center justify-center">T${pad(s.tableId)}</div>
           <div>
-            <div class="text-sm font-bold text-maroon-950">
-              Table ${pad(s.tableId)} ${isMySession ? '<span class="text-xs text-maroon-600">(You)</span>' : ''}
-            </div>
-            <div class="text-xs font-semibold text-canteen-muted">
-              ${s.seats} Seat(s)${seatLabel}
-            </div>
+            <div class="text-sm font-bold text-maroon-950">Table ${pad(s.tableId)} ${isMySession ? '<span class="text-xs text-maroon-600">(You)</span>' : ''}</div>
+            <div class="text-xs font-semibold text-canteen-muted">${s.seats} Seat(s)${seatLabel}</div>
           </div>
         </div>
-
         <div class="text-right">
-          <div class="session-time font-mono font-bold text-xs px-3 py-1 rounded-xl bg-canteen-paper text-maroon-950 border border-canteen-border">
-            ${rush ? fmtTime(s.remain) : fmtTime(s.elapsed)}
-          </div>
+          <div class="session-time font-mono font-bold text-xs px-3 py-1 rounded-xl bg-canteen-paper text-maroon-950 border border-canteen-border">${rush ? fmtTime(s.remain) : fmtTime(s.elapsed)}</div>
         </div>
       `;
     }
-
     list.appendChild(row);
   });
 }
 
 function triggerTimesUp() {
   stillThereDeadline = null;
-  if (!$('timesUpDialog').classList.contains('open')) {
-    openDialog('timesUpDialog');
-  }
+  if (!$('timesUpDialog').classList.contains('open')) openDialog('timesUpDialog');
 }
 
-// Seat selector
 function buildSeatGrid() {
   const grid = $('seatGrid');
   grid.innerHTML = '';
   selectedSeats.clear();
-
   const partyReq = Number($('partySize').value);
   const takenSet = new Set(selectedTable.occupiedSeats || []);
 
   for (let i=1;i<=CAPACITY;i++) {
     const btn = document.createElement('button');
     btn.type = 'button';
-
-    const occupied = takenSet.has(i);
-
-    if (occupied) {
-      btn.className =
-        'w-14 h-14 rounded-2xl bg-slate-200 text-slate-400 font-black text-sm cursor-not-allowed flex items-center justify-center';
-
+    if (takenSet.has(i)) {
+      btn.className = 'w-14 h-14 rounded-2xl bg-slate-200 text-slate-400 font-black text-sm cursor-not-allowed flex items-center justify-center';
       btn.textContent = '✕';
       btn.title = `Seat S${i} is currently occupied`;
       btn.disabled = true;
     } else {
-      const normalClass =
-        'w-14 h-14 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-black text-sm flex items-center justify-center transition-all shadow-md';
-
-      const chosenClass =
-        'w-14 h-14 rounded-2xl bg-maroon-800 text-white font-black text-sm flex items-center justify-center transition-all shadow-lg ring-4 ring-maroon-300';
-
+      const normalClass = 'w-14 h-14 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-black text-sm flex items-center justify-center transition-all shadow-md';
+      const chosenClass = 'w-14 h-14 rounded-2xl bg-maroon-800 text-white font-black text-sm flex items-center justify-center transition-all shadow-lg ring-4 ring-maroon-300';
       btn.className = normalClass;
       btn.textContent = `S${i}`;
-
       btn.addEventListener('click',() => {
         if (selectedSeats.has(i)) {
-          selectedSeats.delete(i);
-          btn.className = normalClass;
+          selectedSeats.delete(i); btn.className = normalClass;
         } else if (selectedSeats.size < partyReq) {
-          selectedSeats.add(i);
-          btn.className = chosenClass;
+          selectedSeats.add(i); btn.className = chosenClass;
         }
-
         updateSeatSelectionState();
       });
     }
-
     grid.appendChild(btn);
   }
-
   updateSeatSelectionState();
 }
 
@@ -1297,21 +978,15 @@ function updateSeatSelectionState() {
   const partyReq = Number($('partySize').value);
   const btn = $('continueSeats');
   const note = $('selectionNote');
-
   if (selectedSeats.size === partyReq) {
     const chosenList = [...selectedSeats].sort((a,b) => a - b).map(n => 'S' + n).join(', ');
     btn.disabled = false;
-    note.textContent =
-      `Selected ${chosenList}. Ready to confirm!`;
-    note.className =
-      'text-center text-xs font-black text-emerald-700 mt-4';
+    note.textContent = `Selected ${chosenList}. Ready to confirm!`;
+    note.className = 'text-center text-xs font-black text-emerald-700 mt-4';
   } else {
     btn.disabled = true;
-    const diff = partyReq - selectedSeats.size;
-    note.textContent =
-      `Please select ${diff} more seat(s).`;
-    note.className =
-      'text-center text-xs font-black text-maroon-800 mt-4';
+    note.textContent = `Please select ${partyReq - selectedSeats.size} more seat(s).`;
+    note.className = 'text-center text-xs font-black text-maroon-800 mt-4';
   }
 }
 
@@ -1321,20 +996,12 @@ function releaseSession(sessionToRelease, noticeMessage = '') {
   fetch('/api/leave', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      id: sessionToRelease.id,
-      sr_code: sessionToRelease.srCode
-    })
+    body: JSON.stringify({ id: sessionToRelease.id, sr_code: sessionToRelease.srCode })
   }).catch(err => console.error('Leave sync error:', err));
 
-  sessions = sessions.filter(
-    s => s.id !== sessionToRelease.id
-  );
+  sessions = sessions.filter(s => s.id !== sessionToRelease.id);
 
-  const t = tables.find(
-    tbl => tbl.id === sessionToRelease.tableId
-  );
-
+  const t = tables.find(tbl => tbl.id === sessionToRelease.tableId);
   if (t) {
     const releasedNums = new Set(sessionToRelease.selectedSeatNumbers || []);
     if (releasedNums.size > 0) {
@@ -1345,26 +1012,21 @@ function releaseSession(sessionToRelease, noticeMessage = '') {
     t.occupied = t.occupiedSeats.length;
   }
 
-  if (
-    userActiveSession &&
-    userActiveSession.id === sessionToRelease.id
-  ) {
-    userActiveSession = null;
-    pendingSession = null;
-    stillThereDeadline = null;
+  if (userActiveSession && userActiveSession.id === sessionToRelease.id) {
+    userActiveSession = null; pendingSession = null; stillThereDeadline = null;
     localStorage.removeItem('vacanteen_my_session');
   }
 
   $('sessionCloseBtn').classList.remove('hidden');
   $('backToSeats').classList.remove('hidden');
+  $('sessionClock').classList.remove('text-rose-600');
+  $('sessionClock').classList.add('text-maroon-950');
 
   resetCheckinForm();
   renderMap();
   closeDialogs(true);
 
-  if (noticeMessage) {
-    showNotice(noticeMessage);
-  }
+  if (noticeMessage) showNotice(noticeMessage);
 }
 
 function syncFromServer() {
@@ -1372,19 +1034,13 @@ function syncFromServer() {
     .then(res => res.json())
     .then(data => {
       const serverSessions = data.sessions || [];
-
-      tables.forEach(t => {
-        t.occupied = 0;
-        t.occupiedSeats = [];
-      });
+      tables.forEach(t => { t.occupied = 0; t.occupiedSeats = []; });
 
       serverSessions.forEach(s => {
         const t = tables.find(tbl => tbl.id === s.tableId);
         if (t) {
           const seatNums = (s.selectedSeatNumbers && s.selectedSeatNumbers.length > 0)
-            ? s.selectedSeatNumbers
-            : Array.from({length: s.seats || 0}, (_, idx) => idx + 1);
-
+            ? s.selectedSeatNumbers : Array.from({length: s.seats || 0}, (_, idx) => idx + 1);
           const merged = new Set([...t.occupiedSeats, ...seatNums]);
           t.occupiedSeats = [...merged].sort((a,b) => a - b);
           t.occupied = t.occupiedSeats.length;
@@ -1392,114 +1048,98 @@ function syncFromServer() {
       });
 
       sessions = serverSessions;
-      if (sessions.length > 0) {
-        hasOccupancyActivity = true;
-      }
+      if (sessions.length > 0) hasOccupancyActivity = true;
 
       const savedMyId = localStorage.getItem('vacanteen_my_session');
       if (savedMyId) {
         const foundMine = sessions.find(s => s.id === savedMyId);
         if (foundMine) {
-          userActiveSession = foundMine;
-          pendingSession = foundMine;
-          // Only automatically popup if they aren't already looking at it
+          // Carry over wrapping up state
+          if (userActiveSession && userActiveSession.isWrappingUp) {
+            foundMine.isWrappingUp = true;
+            foundMine.wrapUpEndTime = userActiveSession.wrapUpEndTime;
+          }
+          userActiveSession = foundMine; pendingSession = foundMine;
           if (!$('sessionDialog').classList.contains('open') && !$('stillThereDialog').classList.contains('open')) {
              restoreSeatedSessionModal(foundMine);
           }
         } else {
-          userActiveSession = null;
-          pendingSession = null;
-          stillThereDeadline = null;
+          userActiveSession = null; pendingSession = null; stillThereDeadline = null;
           localStorage.removeItem('vacanteen_my_session');
           $('sessionCloseBtn').classList.remove('hidden');
           $('backToSeats').classList.remove('hidden');
           closeDialogs(true);
         }
       }
-
       renderMap();
     })
     .catch(err => console.error('Sync error:', err));
 }
 
-// Initialize the application
 window.addEventListener('DOMContentLoaded', () => {
-
-  // UPDATED: Ask for Web Notification Permissions immediately on load
-  if ("Notification" in window && Notification.permission !== "granted" && Notification.permission !== "denied") {
-      Notification.requestPermission();
-  }
 
   updateModeUI();
   renderMap();
   syncFromServer();
   setInterval(syncFromServer, 5000);
 
-  $('closeNoticeBtn').addEventListener('click', () => {
-    $('systemNotice').classList.add('hidden');
-  });
+  $('closeNoticeBtn').addEventListener('click', () => { $('systemNotice').classList.add('hidden'); });
 
   function updateClock() {
-    $('headerTime').textContent =
-      new Intl.DateTimeFormat('en-PH', {
-        timeZone: 'Asia/Manila',
-        hour: 'numeric',
-        minute: '2-digit',
-        second: '2-digit',
-        hour12: true
-      }).format(new Date());
+    $('headerTime').textContent = new Intl.DateTimeFormat('en-PH', {
+        timeZone: 'Asia/Manila', hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true
+    }).format(new Date());
 
     const rush = isRushHour();
     updateModeUI();
     renderSessions();
 
     if (userActiveSession && userActiveSession.seated) {
-      const elapsed = Math.max(
-        0, (Date.now() - userActiveSession.startedAt) / 1000
-      );
+      const elapsed = Math.max(0, (Date.now() - userActiveSession.startedAt) / 1000);
 
       if (rush) {
         stillThereDeadline = null;
         $('sessionTimerSubLabel').textContent = 'Rush Hour Time Remaining';
         const remain = getSessionRemainingSeconds(userActiveSession);
         $('sessionClock').textContent = fmtTime(remain);
-
-        if (remain <= 0) {
-          triggerTimesUp();
-        }
+        if (remain <= 0) triggerTimesUp();
       } else {
-        $('sessionTimerSubLabel').textContent = 'Elapsed Seating Time';
-        $('sessionClock').textContent = fmtTime(elapsed);
-
-        // Regular Hours inactivity check-in (Now 3 minutes)
-        const lastConfirm = userActiveSession.lastConfirmedAt || userActiveSession.startedAt;
-        const sinceConfirmSec = (Date.now() - lastConfirm) / 1000;
-
-        if (sinceConfirmSec >= REGULAR_IDLE_PROMPT_SEC) {
-          if (!stillThereDeadline) {
-            stillThereDeadline = Date.now() + STILL_THERE_GRACE_SEC * 1000;
-            openDialog('stillThereDialog');
-            
-            // UPDATED: Push the device notification alongside the modal
-            if ("Notification" in window && Notification.permission === "granted") {
-                const notif = new Notification("VaCanteen: Still there?", {
-                    body: "Your 3-minute timer is almost up! Please confirm you are still at your table to keep your seat.",
-                    vibrate: [200, 100, 200]
-                });
-                notif.onclick = function() {
-                    window.focus();
-                    notif.close();
-                };
-            }
+        // If they confirmed to wrap up their session
+        if (userActiveSession.isWrappingUp) {
+          const wrapRemain = Math.max(0, Math.ceil((userActiveSession.wrapUpEndTime - Date.now()) / 1000));
+          $('sessionTimerSubLabel').textContent = 'Wrapping Up... Leaving In';
+          $('sessionClock').textContent = wrapRemain + 's';
+          $('sessionClock').classList.add('text-rose-600');
+          
+          if (wrapRemain <= 0) {
+              releaseSession(userActiveSession, "Wrap up time concluded. You have automatically left the table.");
           }
-          const graceLeft = Math.max(0, Math.ceil((stillThereDeadline - Date.now()) / 1000));
-          $('stillThereCountdown').textContent = graceLeft + 's';
+        } else {
+          $('sessionTimerSubLabel').textContent = 'Elapsed Seating Time';
+          $('sessionClock').textContent = fmtTime(elapsed);
+          
+          const lastConfirm = userActiveSession.lastConfirmedAt || userActiveSession.startedAt;
+          const sinceConfirmSec = (Date.now() - lastConfirm) / 1000;
 
-          if (graceLeft <= 0) {
-            releaseSession(
-              userActiveSession,
-              'Your table was automatically released after no response to the check-in.'
-            );
+          if (sinceConfirmSec >= REGULAR_IDLE_PROMPT_SEC) {
+            if (!stillThereDeadline) {
+              stillThereDeadline = Date.now() + STILL_THERE_GRACE_SEC * 1000;
+              openDialog('stillThereDialog');
+              
+              if ("Notification" in window && Notification.permission === "granted") {
+                  const notif = new Notification("VaCanteen: Still there?", {
+                      body: "Your 3-minute timer is almost up! Please confirm you are still at your table.",
+                      vibrate: [200, 100, 200]
+                  });
+                  notif.onclick = function() { window.focus(); notif.close(); };
+              }
+            }
+            const graceLeft = Math.max(0, Math.ceil((stillThereDeadline - Date.now()) / 1000));
+            $('stillThereCountdown').textContent = graceLeft + 's';
+
+            if (graceLeft <= 0) {
+              releaseSession(userActiveSession, 'Your table was automatically released after no response to the check-in.');
+            }
           }
         }
       }
@@ -1508,9 +1148,6 @@ window.addEventListener('DOMContentLoaded', () => {
 
   updateClock();
   setInterval(updateClock, 1000);
-
-  // Link seat filter to filter function
-  $('seatFilter').addEventListener('change', applyFilter);
 
   document.querySelectorAll('[data-close]').forEach(b => {
     b.addEventListener('click', () => closeDialogs(false));
@@ -1527,8 +1164,7 @@ window.addEventListener('DOMContentLoaded', () => {
   });
 
   document.addEventListener('click', () => {
-    filterMenu.classList.add('hidden');
-    filterBtn.setAttribute('aria-expanded', 'false');
+    filterMenu.classList.add('hidden'); filterBtn.setAttribute('aria-expanded', 'false');
   });
 
   filterMenu.addEventListener('click', e => e.stopPropagation());
@@ -1536,7 +1172,7 @@ window.addEventListener('DOMContentLoaded', () => {
   filterMenu.querySelectorAll('[data-filter]').forEach(b => {
     b.addEventListener('click', () => {
       activeFilter = b.dataset.filter;
-      $('filterLabel').textContent = b.textContent.trim();
+      $('filterLabel').textContent = activeFilter.startsWith('seats-') ? b.textContent.trim() : b.textContent.trim();
       filterMenu.classList.add('hidden');
       filterBtn.setAttribute('aria-expanded', 'false');
       applyFilter();
@@ -1546,35 +1182,25 @@ window.addEventListener('DOMContentLoaded', () => {
   $('searchInput').addEventListener('input', applyFilter);
 
   $('chooseTable').addEventListener('click', () => {
-    if (!selectedTable || available(selectedTable) <= 0) {
-      return;
-    }
-
+    if (!selectedTable || available(selectedTable) <= 0) return;
     resetCheckinForm();
     $('checkinTitle').textContent = 'Table ' + pad(selectedTable.id);
     $('partySize').value = '2';
     $('partySize').querySelectorAll('option').forEach(o => {
       o.disabled = Number(o.value) > available(selectedTable);
     });
-
-    if (available(selectedTable) < 2) {
-      $('partySize').value = '1';
-    }
+    if (available(selectedTable) < 2) $('partySize').value = '1';
     openDialog('checkinDialog');
   });
 
   $('backToTable').addEventListener('click', () => {
-    resetCheckinForm();
-    openDialog('tableDialog');
+    resetCheckinForm(); openDialog('tableDialog');
   });
 
   $('srCode').addEventListener('input', (e) => {
     let digits = e.target.value.replace(/[^0-9]/g, '').slice(0, 7);
-    if (digits.length > 2) {
-      e.target.value = digits.slice(0, 2) + '-' + digits.slice(2);
-    } else {
-      e.target.value = digits;
-    }
+    if (digits.length > 2) e.target.value = digits.slice(0, 2) + '-' + digits.slice(2);
+    else e.target.value = digits;
     $('formError').textContent = '';
   });
 
@@ -1585,47 +1211,23 @@ window.addEventListener('DOMContentLoaded', () => {
     $('togglePasswordBtn').textContent = isHidden ? 'Hide' : 'Show';
   });
 
-  $('accessPassword').addEventListener('input', () => {
-    $('formError').textContent = '';
-  });
+  $('accessPassword').addEventListener('input', () => { $('formError').textContent = ''; });
 
   $('continueCheckin').addEventListener('click', () => {
     const sr = $('srCode').value.trim();
     const pwd = $('accessPassword').value.trim();
 
-    if (!isValidSRCode(sr)) {
-      $('formError').textContent = 'Invalid SR Code format. Use XX-XXXXX (e.g. 24-12345).';
-      return;
-    }
-
-    if (!pwd) {
-      $('formError').textContent = 'Please enter the canteen access password.';
-      return;
-    }
-
-    if (pwd !== ACCESS_PASSWORD) {
-      $('formError').textContent = 'Incorrect password. Please enter the valid canteen password.';
-      return;
-    }
-
+    if (!isValidSRCode(sr)) { $('formError').textContent = 'Invalid SR Code format. Use XX-XXXXX (e.g. 24-12345).'; return; }
+    if (!pwd) { $('formError').textContent = 'Please enter the canteen access password.'; return; }
+    if (pwd !== ACCESS_PASSWORD) { $('formError').textContent = 'Incorrect password. Please enter the valid canteen password.'; return; }
+    
     const party = Number($('partySize').value);
-
-    if (party > available(selectedTable)) {
-      $('formError').textContent = 'Not enough available seats.';
-      return;
-    }
+    if (party > available(selectedTable)) { $('formError').textContent = 'Not enough available seats.'; return; }
 
     $('formError').textContent = 'Checking database...';
-
     fetch('/api/checkin', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        sr_code: sr,
-        password: pwd,
-        table_id: selectedTable.id,
-        party: party
-      })
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sr_code: sr, password: pwd, table_id: selectedTable.id, party: party })
     })
       .then(response => response.json())
       .then(data => {
@@ -1639,15 +1241,11 @@ window.addEventListener('DOMContentLoaded', () => {
           $('groupSummary').textContent = party + ' seat(s)';
           $('durationSummaryValue').textContent = $('duration').value + ' minutes';
           setPill($('seatStatus'), status(selectedTable));
-
           buildSeatGrid();
           openDialog('seatsDialog');
         }
       })
-      .catch(error => {
-        console.error('Backend Error:', error);
-        $('formError').textContent = "Cannot connect to server. Is python server.py running?";
-      });
+      .catch(error => { console.error('Backend Error:', error); $('formError').textContent = "Cannot connect to server."; });
   });
 
   $('continueSeats').addEventListener('click', () => {
@@ -1661,129 +1259,80 @@ window.addEventListener('DOMContentLoaded', () => {
 
     const nowMs = Date.now();
     pendingSession = {
-      id: 'usr_' + nowMs,
-      srCode: $('srCode').value.trim(),
-      tableId: selectedTable.id,
-      seats: party,
-      selectedSeatNumbers: chosenSeatsSorted,
-      startedAt: nowMs,
-      lastConfirmedAt: nowMs,
-      duration: rush ? duration : 0,
-      seated: false
+      id: 'usr_' + nowMs, srCode: $('srCode').value.trim(), tableId: selectedTable.id, seats: party,
+      selectedSeatNumbers: chosenSeatsSorted, startedAt: nowMs, lastConfirmedAt: nowMs, duration: rush ? duration : 0, seated: false
     };
 
-    $('sessionCloseBtn').classList.remove('hidden');
-    $('backToSeats').classList.remove('hidden');
-
+    $('sessionCloseBtn').classList.remove('hidden'); $('backToSeats').classList.remove('hidden');
     $('sessionTableLabel').textContent = 'Table ' + pad(selectedTable.id);
     $('sessionSeatsLabel').textContent = `${party} seat(s)${formatSeatList(chosenSeatsSorted)}`;
-
     $('sessionTimerSubLabel').textContent = rush ? 'Rush Hour Time Remaining' : 'Elapsed Seating Time';
     $('sessionClock').textContent = rush ? fmtTime(duration * 60) : '00:00:00';
-
-    $('seatedButton').classList.remove('hidden');
-    $('seatedButton').disabled = false;
-    $('leavingButton').classList.add('hidden');
-    $('sessionMessage').textContent = 'Tap "I’m Seated" once arrived at your table.';
+    $('seatedButton').classList.remove('hidden'); $('seatedButton').disabled = false;
+    $('leavingButton').classList.add('hidden'); $('sessionMessage').textContent = 'Tap "I’m Seated" once arrived at your table.';
 
     openDialog('sessionDialog');
   });
 
-  $('backToSeats').addEventListener('click', () => {
-    openDialog('seatsDialog');
-  });
+  $('backToSeats').addEventListener('click', () => { openDialog('seatsDialog'); });
 
   $('seatedButton').addEventListener('click', () => {
-    if (!pendingSession || pendingSession.seated) return;
-
-    if (available(selectedTable) < pendingSession.seats) {
-      return;
+    // Request notification permission immediately via this intentional user click
+    if ("Notification" in window && Notification.permission !== "granted" && Notification.permission !== "denied") {
+        Notification.requestPermission();
     }
 
+    if (!pendingSession || pendingSession.seated) return;
+    if (available(selectedTable) < pendingSession.seats) return;
+
     const nowMs = Date.now();
-    pendingSession.seated = true;
-    pendingSession.startedAt = nowMs;
-    pendingSession.lastConfirmedAt = nowMs;
-
-    userActiveSession = pendingSession;
-    localStorage.setItem('vacanteen_my_session', pendingSession.id);
-
+    pendingSession.seated = true; pendingSession.startedAt = nowMs; pendingSession.lastConfirmedAt = nowMs;
+    userActiveSession = pendingSession; localStorage.setItem('vacanteen_my_session', pendingSession.id);
     sessions.unshift({ ...pendingSession });
 
-    const mergedSeats = new Set([
-      ...(selectedTable.occupiedSeats || []),
-      ...(pendingSession.selectedSeatNumbers || [])
-    ]);
+    const mergedSeats = new Set([...(selectedTable.occupiedSeats || []), ...(pendingSession.selectedSeatNumbers || [])]);
     selectedTable.occupiedSeats = [...mergedSeats].sort((a,b) => a - b);
     selectedTable.occupied = selectedTable.occupiedSeats.length;
-
     hasOccupancyActivity = true;
 
-    $('sessionCloseBtn').classList.add('hidden');
-    $('backToSeats').classList.add('hidden');
-    $('seatedButton').classList.add('hidden');
-    $('leavingButton').classList.remove('hidden');
-
-    $('sessionMessage').textContent =
-      `You are currently seated at Table ${pad(selectedTable.id)}. Tap "I’m Leaving Table" when finished.`;
+    $('sessionCloseBtn').classList.add('hidden'); $('backToSeats').classList.add('hidden');
+    $('seatedButton').classList.add('hidden'); $('leavingButton').classList.remove('hidden');
+    $('sessionMessage').textContent = `You are currently seated at Table ${pad(selectedTable.id)}. Tap "I’m Leaving Table" when finished.`;
 
     fetch('/api/seat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ...pendingSession, password: ACCESS_PASSWORD })
     })
       .then(res => res.json())
-      .then(data => {
-        if (data.status === 'error') {
-          showNotice(data.message);
-          syncFromServer();
-        }
-      })
+      .then(data => { if (data.status === 'error') { showNotice(data.message); syncFromServer(); } })
       .catch(err => console.error('Seat sync error:', err));
-
     renderMap();
   });
 
-  $('leavingButton').addEventListener('click', () => {
-    if (userActiveSession) {
-      releaseSession(userActiveSession);
-    }
-  });
-
-  $('dismissTimesUp').addEventListener('click', () => {
-    if (userActiveSession) {
-      releaseSession(userActiveSession);
-    } else {
-      closeDialogs(true);
-    }
-  });
+  $('leavingButton').addEventListener('click', () => { if (userActiveSession) releaseSession(userActiveSession); });
+  $('dismissTimesUp').addEventListener('click', () => { if (userActiveSession) releaseSession(userActiveSession); else closeDialogs(true); });
 
   $('confirmStillHere').addEventListener('click', () => {
     if (!userActiveSession) return;
-    const nowMs = Date.now();
-    userActiveSession.lastConfirmedAt = nowMs;
+    
+    // Convert session into 30 second wrap-up state
+    userActiveSession.isWrappingUp = true;
+    userActiveSession.wrapUpEndTime = Date.now() + 30000;
     stillThereDeadline = null;
 
     const inList = sessions.find(s => s.id === userActiveSession.id);
-    if (inList) {
-      inList.lastConfirmedAt = nowMs;
-    }
+    if (inList) inList.isWrappingUp = true;
 
     fetch('/api/keepalive', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: userActiveSession.id })
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      // pass wrapup flag to backend to change expire time to 30s instead of regular time
+      body: JSON.stringify({ id: userActiveSession.id, wrapup: true })
     }).catch(err => console.error('Keepalive error:', err));
 
     restoreSeatedSessionModal(userActiveSession);
   });
 
-  $('leaveFromStillThere').addEventListener('click', () => {
-    if (userActiveSession) {
-      releaseSession(userActiveSession);
-    }
-  });
-
+  $('leaveFromStillThere').addEventListener('click', () => { if (userActiveSession) releaseSession(userActiveSession); });
 });
 </script>
 </body>
