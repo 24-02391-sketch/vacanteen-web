@@ -7,7 +7,9 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 STATE_FILE = 'canteen_state.json'
 SR_CODE_PATTERN = re.compile(r'^\d{2}-\d{5}$')
 ACCESS_PASSWORD = 'batstateu'
-REGULAR_AUTO_EXPIRE_SECONDS = 21 * 60  # 20 mins + 60s "Are you still there?" grace period
+
+# UPDATED: Changed from 21 * 60 to 4 * 60 (3 mins regular time + 60s grace period for testing)
+REGULAR_AUTO_EXPIRE_SECONDS = 4 * 60  
 
 
 def is_valid_sr_code(sr_code):

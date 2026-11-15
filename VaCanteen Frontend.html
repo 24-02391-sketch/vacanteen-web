@@ -333,7 +333,7 @@ button:disabled { cursor:not-allowed; }
     </a>
 
     <!-- Filters and Search -->
-    <div class="flex-1 max-w-xl mx-2 sm:mx-6 flex items-center gap-3 min-w-0">
+    <div class="flex-1 max-w-2xl mx-2 sm:mx-6 flex items-center gap-3 min-w-0">
       <div class="relative shrink-0">
         <button id="filterButton" type="button" aria-expanded="false" class="h-12 px-4 rounded-xl bg-white border border-canteen-border hover:border-maroon-300 text-canteen-ink font-extrabold text-sm flex items-center gap-2.5 shadow-sm hover:shadow transition-all">
           <svg class="w-4 h-4 text-maroon-700" viewBox="0 0 24 24" fill="currentColor">
@@ -361,12 +361,26 @@ button:disabled { cursor:not-allowed; }
         </div>
       </div>
 
-      <div class="flex-1 relative flex items-center min-w-0">
-        <svg class="w-4 h-4 text-canteen-muted absolute left-3.5 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-          <circle cx="11" cy="11" r="7"/>
-          <path d="m16 16 4.5 4.5"/>
-        </svg>
-        <input id="searchInput" type="search" placeholder="Search table (e.g. T02, 14)..." class="w-full h-10 pl-9 pr-3 rounded-xl bg-white border border-canteen-border text-xs sm:text-sm font-semibold text-canteen-ink focus:outline-none focus:border-maroon-600 focus:ring-2 focus:ring-maroon-600/20 shadow-sm">
+      <div class="flex-1 relative flex items-center min-w-0 gap-2">
+        <!-- Search Bar -->
+        <div class="relative w-full">
+          <svg class="w-4 h-4 text-canteen-muted absolute left-3.5 top-3 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <circle cx="11" cy="11" r="7"/>
+            <path d="m16 16 4.5 4.5"/>
+          </svg>
+          <input id="searchInput" type="search" placeholder="Search table..." class="w-full h-10 pl-9 pr-3 rounded-xl bg-white border border-canteen-border text-xs sm:text-sm font-semibold text-canteen-ink focus:outline-none focus:border-maroon-600 focus:ring-2 focus:ring-maroon-600/20 shadow-sm">
+        </div>
+        
+        <!-- UPDATED: Added Seat Number Filter -->
+        <select id="seatFilter" class="h-10 px-3 rounded-xl bg-white border border-canteen-border text-xs sm:text-sm font-semibold text-canteen-ink focus:outline-none focus:border-maroon-600 focus:ring-2 focus:ring-maroon-600/20 shadow-sm cursor-pointer shrink-0">
+          <option value="0">Any Seats</option>
+          <option value="1">1+ Seats</option>
+          <option value="2">2+ Seats</option>
+          <option value="3">3+ Seats</option>
+          <option value="4">4+ Seats</option>
+          <option value="5">5+ Seats</option>
+          <option value="6">Empty (6 Seats)</option>
+        </select>
       </div>
     </div>
 
@@ -768,7 +782,7 @@ button:disabled { cursor:not-allowed; }
     <div class="w-16 h-16 rounded-3xl bg-amber-100 text-amber-600 flex items-center justify-center font-black text-3xl mx-auto mb-4 animate-pulse">👋</div>
     <h2 class="text-3xl font-display font-black text-maroon-950">Are you still there?</h2>
     <p class="text-sm text-canteen-muted font-bold mt-2 leading-relaxed">
-      You have been seated for 20 minutes. Please confirm if you are still using your table, or your seats will automatically be released in:
+      You have been seated for a while. Please confirm if you are still using your table, or your seats will automatically be released in:
     </p>
     <div id="stillThereCountdown" class="font-mono font-black text-5xl text-amber-600 my-4">60s</div>
     <div class="space-y-3 mt-5">
@@ -782,8 +796,9 @@ button:disabled { cursor:not-allowed; }
 <script>
 const CAPACITY = 6;
 const ACCESS_PASSWORD = 'batstateu';
-const REGULAR_IDLE_PROMPT_SEC = 20 * 60; // 20 minutes before "Are you still there?" prompt
-const STILL_THERE_GRACE_SEC = 60;        // 60 seconds to respond before auto-release
+// UPDATED: Changed from 20 * 60 to 3 * 60 (3 minutes for testing)
+const REGULAR_IDLE_PROMPT_SEC = 3 * 60; 
+const STILL_THERE_GRACE_SEC = 60;        
 
 // Original table positions + exact occupiedSeats tracking
 const baseTables = [
@@ -837,7 +852,6 @@ function isValidSRCode(sr) {
   return /^\d{2}-\d{5}$/.test(sr) && sr !== '00-00000';
 }
 
-// Rush hour: 11 AM to 1 PM Philippine time
 function isRushHour() {
   const parts = new Intl.DateTimeFormat('en-US',{
     timeZone:'Asia/Manila',
@@ -909,7 +923,6 @@ function openDialog(id) {
 }
 
 function closeDialogs(force = false) {
-  // Never allow closing modals if the user is actively seated unless forced (on leave/expiry)
   if (!force && userActiveSession && userActiveSession.seated) {
     return;
   }
@@ -952,7 +965,6 @@ function restoreSeatedSessionModal(sessionObj) {
   pendingSession = sessionObj;
   userActiveSession = sessionObj;
 
-  // Lock the modal: hide X close button and Back button so seated users cannot dismiss it
   $('sessionCloseBtn').classList.add('hidden');
   $('backToSeats').classList.add('hidden');
 
@@ -975,13 +987,12 @@ function restoreSeatedSessionModal(sessionObj) {
     $('sessionClock').textContent = fmtTime(elapsed);
   }
 
-  // Keep prompt modals on top if active; otherwise ensure sessionDialog is open
   if (!$('stillThereDialog').classList.contains('open') && !$('timesUpDialog').classList.contains('open')) {
     openDialog('sessionDialog');
   }
 }
 
-// Render minimap without changing table positions
+// Render minimap 
 function renderMap() {
   const stage = $('mapStage');
   stage.querySelectorAll('.table-dot').forEach(e => e.remove());
@@ -1012,7 +1023,6 @@ function renderMap() {
   renderSessions();
 }
 
-// Summary counters and percentage bars
 function renderStats() {
   const opens = tables.filter(t => available(t) > 0).length;
   const seats = tables.reduce((a,t) => a + available(t),0);
@@ -1039,20 +1049,20 @@ function renderStats() {
   $('seatProgress').style.width = sp + '%';
 }
 
-// Search and table filter
+// UPDATED: Search and Table Seats Filter Logic
 function applyFilter() {
   const q = $('searchInput').value.trim().toLowerCase();
+  const minSeatsRequired = Number($('seatFilter').value);
 
   document.querySelectorAll('.table-dot').forEach(b => {
     const id = Number(b.dataset.id);
-    const pass =
-      activeFilter === 'all' ||
-      b.dataset.status === activeFilter;
+    const passStatus = activeFilter === 'all' || b.dataset.status === activeFilter;
+    const passSearch = !q || ('table ' + pad(id) + ' t' + id).toLowerCase().includes(q);
+    
+    const t = tables.find(tbl => tbl.id === id);
+    const passSeats = available(t) >= minSeatsRequired;
 
-    const label = ('table ' + pad(id) + ' t' + id).toLowerCase();
-
-    b.style.display =
-      pass && (!q || label.includes(q)) ? 'flex' : 'none';
+    b.style.display = (passStatus && passSearch && passSeats) ? 'flex' : 'none';
   });
 }
 
@@ -1135,11 +1145,28 @@ function renderSessions() {
     const row = document.createElement('div');
     const isTop = idx === 0;
     const seatLabel = formatSeatList(s.selectedSeatNumbers);
+    
+    // Check if this row belongs to the current user
+    const isMySession = userActiveSession && s.id === userActiveSession.id;
 
     if (isTop) {
       row.className =
         'p-5 rounded-3xl bg-gradient-to-br from-maroon-900 via-maroon-800 to-maroon-700 text-white border-2 border-maroon-500 shadow-top-card relative overflow-hidden transition-all hover:scale-[1.01]';
+    } else {
+      row.className =
+        'p-3.5 rounded-2xl bg-white border border-canteen-border flex items-center justify-between shadow-sm hover:border-maroon-200 transition-all';
+    }
 
+    // UPDATED: Make the sidebar card clickable if it belongs to the current user
+    if (isMySession) {
+        row.classList.add('cursor-pointer', 'ring-2', 'ring-maroon-300');
+        row.title = "Click to open your session timer";
+        row.addEventListener('click', () => {
+            restoreSeatedSessionModal(userActiveSession);
+        });
+    }
+
+    if (isTop) {
       row.innerHTML = `
         <div class="absolute -right-6 -bottom-6 w-24 h-24 rounded-full bg-white/5 pointer-events-none"></div>
 
@@ -1149,7 +1176,7 @@ function renderSessions() {
           </span>
 
           <span class="text-xs font-bold text-maroon-200">
-            ${s.seated ? 'Checked In' : 'Pending'}
+            ${s.seated ? (isMySession ? 'Your Table (Click to Open)' : 'Checked In') : 'Pending'}
           </span>
         </div>
 
@@ -1180,9 +1207,6 @@ function renderSessions() {
         </div>
       `;
     } else {
-      row.className =
-        'p-3.5 rounded-2xl bg-white border border-canteen-border flex items-center justify-between shadow-sm hover:border-maroon-200 transition-all';
-
       row.innerHTML = `
         <div class="flex items-center gap-3">
           <div class="w-10 h-10 rounded-xl bg-maroon-50 text-maroon-900 font-display font-black text-sm flex items-center justify-center">
@@ -1191,7 +1215,7 @@ function renderSessions() {
 
           <div>
             <div class="text-sm font-bold text-maroon-950">
-              Table ${pad(s.tableId)}
+              Table ${pad(s.tableId)} ${isMySession ? '<span class="text-xs text-maroon-600">(You)</span>' : ''}
             </div>
             <div class="text-xs font-semibold text-canteen-muted">
               ${s.seats} Seat(s)${seatLabel}
@@ -1218,7 +1242,7 @@ function triggerTimesUp() {
   }
 }
 
-// Seat selector using exact occupied seat numbers
+// Seat selector
 function buildSeatGrid() {
   const grid = $('seatGrid');
   grid.innerHTML = '';
@@ -1291,7 +1315,6 @@ function updateSeatSelectionState() {
   }
 }
 
-// Release occupied seats
 function releaseSession(sessionToRelease, noticeMessage = '') {
   if (!sessionToRelease) return;
 
@@ -1332,7 +1355,6 @@ function releaseSession(sessionToRelease, noticeMessage = '') {
     localStorage.removeItem('vacanteen_my_session');
   }
 
-  // Restore close & back buttons for future check-ins
   $('sessionCloseBtn').classList.remove('hidden');
   $('backToSeats').classList.remove('hidden');
 
@@ -1345,7 +1367,6 @@ function releaseSession(sessionToRelease, noticeMessage = '') {
   }
 }
 
-// Load saved bookings from Python backend
 function syncFromServer() {
   fetch('/api/state')
     .then(res => res.json())
@@ -1381,9 +1402,11 @@ function syncFromServer() {
         if (foundMine) {
           userActiveSession = foundMine;
           pendingSession = foundMine;
-          restoreSeatedSessionModal(foundMine);
+          // Only automatically popup if they aren't already looking at it
+          if (!$('sessionDialog').classList.contains('open') && !$('stillThereDialog').classList.contains('open')) {
+             restoreSeatedSessionModal(foundMine);
+          }
         } else {
-          // Session was released/expired on the server
           userActiveSession = null;
           pendingSession = null;
           stillThereDeadline = null;
@@ -1401,6 +1424,11 @@ function syncFromServer() {
 
 // Initialize the application
 window.addEventListener('DOMContentLoaded', () => {
+
+  // UPDATED: Ask for Web Notification Permissions immediately on load
+  if ("Notification" in window && Notification.permission !== "granted" && Notification.permission !== "denied") {
+      Notification.requestPermission();
+  }
 
   updateModeUI();
   renderMap();
@@ -1443,7 +1471,7 @@ window.addEventListener('DOMContentLoaded', () => {
         $('sessionTimerSubLabel').textContent = 'Elapsed Seating Time';
         $('sessionClock').textContent = fmtTime(elapsed);
 
-        // Regular Hours 20-minute inactivity check-in
+        // Regular Hours inactivity check-in (Now 3 minutes)
         const lastConfirm = userActiveSession.lastConfirmedAt || userActiveSession.startedAt;
         const sinceConfirmSec = (Date.now() - lastConfirm) / 1000;
 
@@ -1451,6 +1479,18 @@ window.addEventListener('DOMContentLoaded', () => {
           if (!stillThereDeadline) {
             stillThereDeadline = Date.now() + STILL_THERE_GRACE_SEC * 1000;
             openDialog('stillThereDialog');
+            
+            // UPDATED: Push the device notification alongside the modal
+            if ("Notification" in window && Notification.permission === "granted") {
+                const notif = new Notification("VaCanteen: Still there?", {
+                    body: "Your 3-minute timer is almost up! Please confirm you are still at your table to keep your seat.",
+                    vibrate: [200, 100, 200]
+                });
+                notif.onclick = function() {
+                    window.focus();
+                    notif.close();
+                };
+            }
           }
           const graceLeft = Math.max(0, Math.ceil((stillThereDeadline - Date.now()) / 1000));
           $('stillThereCountdown').textContent = graceLeft + 's';
@@ -1458,7 +1498,7 @@ window.addEventListener('DOMContentLoaded', () => {
           if (graceLeft <= 0) {
             releaseSession(
               userActiveSession,
-              'Your table was automatically released after no response to the 20-minute check-in.'
+              'Your table was automatically released after no response to the check-in.'
             );
           }
         }
@@ -1469,26 +1509,21 @@ window.addEventListener('DOMContentLoaded', () => {
   updateClock();
   setInterval(updateClock, 1000);
 
-  // Modal close buttons (only work when not locked in a seated session)
+  // Link seat filter to filter function
+  $('seatFilter').addEventListener('change', applyFilter);
+
   document.querySelectorAll('[data-close]').forEach(b => {
     b.addEventListener('click', () => closeDialogs(false));
   });
 
-  // Filter dropdown
   const filterBtn = $('filterButton');
   const filterMenu = $('filterMenu');
 
   filterBtn.addEventListener('click', e => {
     e.stopPropagation();
-
-    const opening =
-      filterMenu.classList.contains('hidden');
-
+    const opening = filterMenu.classList.contains('hidden');
     filterMenu.classList.toggle('hidden');
-
-    filterBtn.setAttribute(
-      'aria-expanded', String(opening)
-    );
+    filterBtn.setAttribute('aria-expanded', String(opening));
   });
 
   document.addEventListener('click', () => {
@@ -1496,46 +1531,35 @@ window.addEventListener('DOMContentLoaded', () => {
     filterBtn.setAttribute('aria-expanded', 'false');
   });
 
-  filterMenu.addEventListener(
-    'click', e => e.stopPropagation()
-  );
+  filterMenu.addEventListener('click', e => e.stopPropagation());
 
   filterMenu.querySelectorAll('[data-filter]').forEach(b => {
     b.addEventListener('click', () => {
       activeFilter = b.dataset.filter;
       $('filterLabel').textContent = b.textContent.trim();
-
       filterMenu.classList.add('hidden');
       filterBtn.setAttribute('aria-expanded', 'false');
-
       applyFilter();
     });
   });
 
   $('searchInput').addEventListener('input', applyFilter);
 
-  // Select table -> always clear form history
   $('chooseTable').addEventListener('click', () => {
     if (!selectedTable || available(selectedTable) <= 0) {
       return;
     }
 
     resetCheckinForm();
-
-    $('checkinTitle').textContent =
-      'Table ' + pad(selectedTable.id);
-
+    $('checkinTitle').textContent = 'Table ' + pad(selectedTable.id);
     $('partySize').value = '2';
-
     $('partySize').querySelectorAll('option').forEach(o => {
-      o.disabled =
-        Number(o.value) > available(selectedTable);
+      o.disabled = Number(o.value) > available(selectedTable);
     });
 
     if (available(selectedTable) < 2) {
       $('partySize').value = '1';
     }
-
     openDialog('checkinDialog');
   });
 
@@ -1544,7 +1568,6 @@ window.addEventListener('DOMContentLoaded', () => {
     openDialog('tableDialog');
   });
 
-  // Auto-insert hyphen for XX-XXXXX SR Code typing convenience
   $('srCode').addEventListener('input', (e) => {
     let digits = e.target.value.replace(/[^0-9]/g, '').slice(0, 7);
     if (digits.length > 2) {
@@ -1555,7 +1578,6 @@ window.addEventListener('DOMContentLoaded', () => {
     $('formError').textContent = '';
   });
 
-  // Show/hide password toggle
   $('togglePasswordBtn').addEventListener('click', () => {
     const pwdInput = $('accessPassword');
     const isHidden = pwdInput.type === 'password';
@@ -1567,7 +1589,6 @@ window.addEventListener('DOMContentLoaded', () => {
     $('formError').textContent = '';
   });
 
-  // Student check-in (Integrated with Pure Python DSA Backend + Password Check)
   $('continueCheckin').addEventListener('click', () => {
     const sr = $('srCode').value.trim();
     const pwd = $('accessPassword').value.trim();
@@ -1629,7 +1650,6 @@ window.addEventListener('DOMContentLoaded', () => {
       });
   });
 
-  // Confirm seat selection
   $('continueSeats').addEventListener('click', () => {
     const party = Number($('partySize').value);
     const duration = Number($('duration').value);
@@ -1652,30 +1672,19 @@ window.addEventListener('DOMContentLoaded', () => {
       seated: false
     };
 
-    // Before clicking "I'm Seated", user can still go back or close
     $('sessionCloseBtn').classList.remove('hidden');
     $('backToSeats').classList.remove('hidden');
 
-    $('sessionTableLabel').textContent =
-      'Table ' + pad(selectedTable.id);
+    $('sessionTableLabel').textContent = 'Table ' + pad(selectedTable.id);
+    $('sessionSeatsLabel').textContent = `${party} seat(s)${formatSeatList(chosenSeatsSorted)}`;
 
-    $('sessionSeatsLabel').textContent =
-      `${party} seat(s)${formatSeatList(chosenSeatsSorted)}`;
-
-    $('sessionTimerSubLabel').textContent = rush
-      ? 'Rush Hour Time Remaining'
-      : 'Elapsed Seating Time';
-
-    $('sessionClock').textContent = rush
-      ? fmtTime(duration * 60)
-      : '00:00:00';
+    $('sessionTimerSubLabel').textContent = rush ? 'Rush Hour Time Remaining' : 'Elapsed Seating Time';
+    $('sessionClock').textContent = rush ? fmtTime(duration * 60) : '00:00:00';
 
     $('seatedButton').classList.remove('hidden');
     $('seatedButton').disabled = false;
     $('leavingButton').classList.add('hidden');
-
-    $('sessionMessage').textContent =
-      'Tap "I’m Seated" once arrived at your table.';
+    $('sessionMessage').textContent = 'Tap "I’m Seated" once arrived at your table.';
 
     openDialog('sessionDialog');
   });
@@ -1684,7 +1693,6 @@ window.addEventListener('DOMContentLoaded', () => {
     openDialog('seatsDialog');
   });
 
-  // Start occupancy
   $('seatedButton').addEventListener('click', () => {
     if (!pendingSession || pendingSession.seated) return;
 
@@ -1711,10 +1719,8 @@ window.addEventListener('DOMContentLoaded', () => {
 
     hasOccupancyActivity = true;
 
-    // Lock the "I'm Leaving" window: remove X and Back button
     $('sessionCloseBtn').classList.add('hidden');
     $('backToSeats').classList.add('hidden');
-
     $('seatedButton').classList.add('hidden');
     $('leavingButton').classList.remove('hidden');
 
@@ -1738,14 +1744,12 @@ window.addEventListener('DOMContentLoaded', () => {
     renderMap();
   });
 
-  // Leave table
   $('leavingButton').addEventListener('click', () => {
     if (userActiveSession) {
       releaseSession(userActiveSession);
     }
   });
 
-  // Rush-hour expiry
   $('dismissTimesUp').addEventListener('click', () => {
     if (userActiveSession) {
       releaseSession(userActiveSession);
@@ -1754,7 +1758,6 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Regular Hours "Are you still there?" -> Confirm Still Here
   $('confirmStillHere').addEventListener('click', () => {
     if (!userActiveSession) return;
     const nowMs = Date.now();
@@ -1775,7 +1778,6 @@ window.addEventListener('DOMContentLoaded', () => {
     restoreSeatedSessionModal(userActiveSession);
   });
 
-  // Regular Hours "Are you still there?" -> Leaving Now
   $('leaveFromStillThere').addEventListener('click', () => {
     if (userActiveSession) {
       releaseSession(userActiveSession);
