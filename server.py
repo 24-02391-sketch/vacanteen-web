@@ -1,15 +1,27 @@
 import os
+import re
 import json
 import time
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 STATE_FILE = 'canteen_state.json'
+SR_CODE_PATTERN = re.compile(r'^\d{2}-\d{5}$')
+REGULAR_AUTO_EXPIRE_SECONDS = 21 * 60  # 20 mins + 60s "Are you still there?" grace period
+
+
+def is_valid_sr_code(sr_code):
+    if not isinstance(sr_code, str):
+        return False
+    sr_code = sr_code.strip()
+    return bool(SR_CODE_PATTERN.match(sr_code)) and sr_code != '00-00000'
+
 
 class BSTNode:
     def __init__(self, sr_code):
         self.sr_code = sr_code
         self.left = None
         self.right = None
+
 
 class SRCodeBST:
     def __init__(self):
@@ -54,7 +66,9 @@ class SRCodeBST:
             current = current.left
         return current
 
+
 active_students_bst = SRCodeBST()
+
 
 class SessionMinHeap:
     def __init__(self):
@@ -95,7 +109,19 @@ class SessionMinHeap:
                 return s
         return None
 
+    def update_expire_by_id(self, session_id, new_expire_time, new_confirmed_ms):
+        for idx, s in enumerate(self.heap):
+            if s.get('id') == session_id:
+                s['expire_time'] = new_expire_time
+                s['lastConfirmedAt'] = new_confirmed_ms
+                self._heapify_up(idx)
+                self._heapify_down(idx)
+                return s
+        return None
+
+
 active_sessions_heap = SessionMinHeap()
+
 
 def save_state():
     try:
@@ -103,6 +129,7 @@ def save_state():
             json.dump(active_sessions_heap.heap, f)
     except Exception as e:
         print("Save error:", e)
+
 
 def load_state():
     if not os.path.exists(STATE_FILE):
@@ -118,6 +145,7 @@ def load_state():
     except Exception as e:
         print("Load error:", e)
 
+
 def cleanup_expired():
     now = time.time()
     expired_ids = [s['id'] for s in active_sessions_heap.heap if s.get('expire_time', 9999999999) <= now]
@@ -128,7 +156,21 @@ def cleanup_expired():
     if expired_ids:
         save_state()
 
+
+def get_taken_seats(table_id):
+    taken = set()
+    for s in active_sessions_heap.heap:
+        if s.get('tableId') == table_id:
+            seat_nums = s.get('selectedSeatNumbers') or []
+            if seat_nums:
+                taken.update(seat_nums)
+            else:
+                taken.update(range(1, int(s.get('seats', 0)) + 1))
+    return taken
+
+
 load_state()
+
 
 class VaCanteenServer(BaseHTTPRequestHandler):
     def _send_json(self, code, payload):
@@ -164,39 +206,95 @@ class VaCanteenServer(BaseHTTPRequestHandler):
 
         if self.path == '/api/checkin':
             cleanup_expired()
-            sr_code = data.get('sr_code')
+            sr_code = (data.get('sr_code') or '').strip()
+            table_id = data.get('table_id')
+            party = int(data.get('party', 1))
+
+            if not is_valid_sr_code(sr_code):
+                self._send_json(400, {
+                    "status": "error",
+                    "message": "Invalid SR Code format. Use XX-XXXXX (e.g. 24-12345)."
+                })
+                return
+
             if active_students_bst.search(active_students_bst.root, sr_code):
-                self._send_json(400, {"status": "error", "message": f"SR Code {sr_code} is already seated!"})
-            else:
-                self._send_json(200, {"status": "success"})
+                self._send_json(400, {
+                    "status": "error",
+                    "message": f"SR Code {sr_code} is already seated!"
+                })
+                return
+
+            taken = get_taken_seats(table_id)
+            if 6 - len(taken) < party:
+                self._send_json(400, {
+                    "status": "error",
+                    "message": "Not enough available seats at this table."
+                })
+                return
+
+            self._send_json(200, {"status": "success"})
 
         elif self.path == '/api/seat':
-            sr_code = data.get('srCode')
-            if sr_code and active_students_bst.search(active_students_bst.root, sr_code):
-                self._send_json(400, {"status": "error", "message": f"SR Code {sr_code} is already seated!"})
+            cleanup_expired()
+            sr_code = (data.get('srCode') or '').strip()
+            table_id = data.get('tableId')
+            seat_numbers = [int(x) for x in (data.get('selectedSeatNumbers') or [])]
+
+            if not is_valid_sr_code(sr_code):
+                self._send_json(400, {
+                    "status": "error",
+                    "message": "Invalid SR Code format. Use XX-XXXXX (e.g. 24-12345)."
+                })
+                return
+
+            if active_students_bst.search(active_students_bst.root, sr_code):
+                self._send_json(400, {
+                    "status": "error",
+                    "message": f"SR Code {sr_code} is already seated!"
+                })
+                return
+
+            taken = get_taken_seats(table_id)
+            if any(s in taken or s < 1 or s > 6 for s in seat_numbers):
+                self._send_json(400, {
+                    "status": "error",
+                    "message": "One or more selected seats were just taken. Please pick again."
+                })
                 return
 
             duration = int(data.get('duration', 0))
-            started_sec = data.get('startedAt', time.time() * 1000) / 1000.0
-            expire_time = (started_sec + duration * 60) if duration > 0 else 9999999999
+            started_ms = data.get('startedAt', int(time.time() * 1000))
+            started_sec = started_ms / 1000.0
+            expire_time = (started_sec + duration * 60) if duration > 0 else (started_sec + REGULAR_AUTO_EXPIRE_SECONDS)
 
             session_record = {
                 "id": data.get('id'),
                 "srCode": sr_code,
-                "tableId": data.get('tableId'),
-                "seats": data.get('seats'),
-                "selectedSeatNumbers": data.get('selectedSeatNumbers', []),
-                "startedAt": data.get('startedAt'),
+                "tableId": table_id,
+                "seats": len(seat_numbers) if seat_numbers else int(data.get('seats', 1)),
+                "selectedSeatNumbers": sorted(seat_numbers),
+                "startedAt": started_ms,
+                "lastConfirmedAt": started_ms,
                 "duration": duration,
                 "seated": True,
                 "expire_time": expire_time
             }
 
-            if sr_code:
-                active_students_bst.root = active_students_bst.insert(active_students_bst.root, sr_code)
+            active_students_bst.root = active_students_bst.insert(active_students_bst.root, sr_code)
             active_sessions_heap.insert(session_record)
             save_state()
             self._send_json(200, {"status": "success"})
+
+        elif self.path == '/api/keepalive':
+            session_id = data.get('id')
+            now_ms = int(time.time() * 1000)
+            new_expire = time.time() + REGULAR_AUTO_EXPIRE_SECONDS
+            updated = active_sessions_heap.update_expire_by_id(session_id, new_expire, now_ms)
+            if updated:
+                save_state()
+                self._send_json(200, {"status": "success", "lastConfirmedAt": now_ms})
+            else:
+                self._send_json(404, {"status": "error", "message": "Session already expired."})
 
         elif self.path == '/api/leave':
             session_id = data.get('id')
@@ -206,6 +304,7 @@ class VaCanteenServer(BaseHTTPRequestHandler):
                 active_students_bst.root = active_students_bst.delete(active_students_bst.root, sr_code)
             save_state()
             self._send_json(200, {"status": "success"})
+
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 8000))
