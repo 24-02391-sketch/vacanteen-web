@@ -8,7 +8,6 @@ STATE_FILE = 'canteen_state.json'
 SR_CODE_PATTERN = re.compile(r'^\d{2}-\d{5}$')
 ACCESS_PASSWORD = 'batstateu'
 
-# UPDATED: Changed from 21 * 60 to 4 * 60 (3 mins regular time + 60s grace period for testing)
 REGULAR_AUTO_EXPIRE_SECONDS = 4 * 60  
 
 
@@ -307,7 +306,11 @@ class VaCanteenServer(BaseHTTPRequestHandler):
         elif self.path == '/api/keepalive':
             session_id = data.get('id')
             now_ms = int(time.time() * 1000)
-            new_expire = time.time() + REGULAR_AUTO_EXPIRE_SECONDS
+            
+            # Use extra_seconds to determine new expiration time (used for the 30-second wrap up)
+            extra_seconds = int(data.get('extra_seconds', REGULAR_AUTO_EXPIRE_SECONDS))
+            new_expire = time.time() + extra_seconds
+            
             updated = active_sessions_heap.update_expire_by_id(session_id, new_expire, now_ms)
             if updated:
                 save_state()
