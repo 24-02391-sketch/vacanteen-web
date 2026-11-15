@@ -594,7 +594,7 @@ button:disabled { cursor:not-allowed; }
           </li>
           <li class="flex items-start gap-3">
             <span class="w-6 h-6 rounded-xl bg-maroon-100 text-maroon-800 font-extrabold flex items-center justify-center text-xs shrink-0 mt-0.5">2</span>
-            <span>Pick your seats, enter your Student ID (SR Code e.g. <strong>24-12345</strong>), and confirm check-in.</span>
+            <span>Enter your Student SR Code (e.g. <strong>24-12345</strong>) and canteen access password, then pick your seats.</span>
           </li>
           <li class="flex items-start gap-3">
             <span class="w-6 h-6 rounded-xl bg-maroon-100 text-maroon-800 font-extrabold flex items-center justify-center text-xs shrink-0 mt-0.5">3</span>
@@ -628,7 +628,7 @@ button:disabled { cursor:not-allowed; }
   </div>
 </div>
 
-<!-- MODAL 2: CHECK IN -->
+<!-- MODAL 2: CHECK IN (WITH PASSWORD VERIFICATION) -->
 <div id="checkinDialog" class="backdrop fixed inset-0 z-50 flex items-center justify-center p-4 bg-maroon-950/65 backdrop-blur-md" aria-hidden="true">
   <div class="dialog-content relative w-full max-w-md bg-white rounded-3xl border border-canteen-border p-7 shadow-modal overflow-hidden">
     <button type="button" data-close class="absolute top-4 right-4 w-9 h-9 rounded-full bg-canteen-paper text-canteen-muted hover:text-maroon-900 flex items-center justify-center font-black text-xl" aria-label="Close">×</button>
@@ -637,11 +637,18 @@ button:disabled { cursor:not-allowed; }
       <div class="w-2/3 h-full bg-maroon-700"></div>
     </div>
     <h2 id="checkinTitle" class="text-3xl font-display font-black text-maroon-950">Table Details</h2>
-    <p class="text-sm text-canteen-muted mt-1 mb-6 font-medium">Enter your valid student ID and group party details.</p>
+    <p class="text-sm text-canteen-muted mt-1 mb-5 font-medium">Enter your student ID, canteen password, and group details.</p>
     <div class="space-y-4 mb-6">
       <div>
         <label for="srCode" class="block text-xs font-extrabold text-canteen-ink mb-1.5">Student SR Code (Format: XX-XXXXX)</label>
         <input id="srCode" type="text" maxlength="8" placeholder="e.g. 24-12345" autocomplete="off" class="w-full h-12 px-4 rounded-xl border border-canteen-border bg-white text-canteen-ink text-sm font-bold outline-none focus:border-maroon-600 focus:ring-2 focus:ring-maroon-600/20">
+      </div>
+      <div>
+        <label for="accessPassword" class="block text-xs font-extrabold text-canteen-ink mb-1.5">Canteen Access Password</label>
+        <div class="relative flex items-center">
+          <input id="accessPassword" type="password" placeholder="Enter password to select seats" autocomplete="new-password" class="w-full h-12 pl-4 pr-14 rounded-xl border border-canteen-border bg-white text-canteen-ink text-sm font-bold outline-none focus:border-maroon-600 focus:ring-2 focus:ring-maroon-600/20">
+          <button type="button" id="togglePasswordBtn" class="absolute right-3 text-xs font-extrabold text-canteen-muted hover:text-maroon-800 px-1.5 py-1">Show</button>
+        </div>
         <div id="formError" class="text-xs font-bold text-rose-600 mt-1 min-h-[18px]"></div>
       </div>
       <div>
@@ -774,6 +781,7 @@ button:disabled { cursor:not-allowed; }
 <!-- APPLICATION JAVASCRIPT -->
 <script>
 const CAPACITY = 6;
+const ACCESS_PASSWORD = 'batstateu';
 const REGULAR_IDLE_PROMPT_SEC = 20 * 60; // 20 minutes before "Are you still there?" prompt
 const STILL_THERE_GRACE_SEC = 60;        // 60 seconds to respond before auto-release
 
@@ -875,6 +883,13 @@ function showNotice(msg) {
 
 function resetCheckinForm() {
   $('srCode').value = '';
+  if ($('accessPassword')) {
+    $('accessPassword').value = '';
+    $('accessPassword').type = 'password';
+  }
+  if ($('togglePasswordBtn')) {
+    $('togglePasswordBtn').textContent = 'Show';
+  }
   $('formError').textContent = '';
   $('partySize').value = '2';
   $('duration').value = '20';
@@ -1540,12 +1555,35 @@ window.addEventListener('DOMContentLoaded', () => {
     $('formError').textContent = '';
   });
 
-  // Student check-in (Integrated with Pure Python DSA Backend)
+  // Show/hide password toggle
+  $('togglePasswordBtn').addEventListener('click', () => {
+    const pwdInput = $('accessPassword');
+    const isHidden = pwdInput.type === 'password';
+    pwdInput.type = isHidden ? 'text' : 'password';
+    $('togglePasswordBtn').textContent = isHidden ? 'Hide' : 'Show';
+  });
+
+  $('accessPassword').addEventListener('input', () => {
+    $('formError').textContent = '';
+  });
+
+  // Student check-in (Integrated with Pure Python DSA Backend + Password Check)
   $('continueCheckin').addEventListener('click', () => {
     const sr = $('srCode').value.trim();
+    const pwd = $('accessPassword').value.trim();
 
     if (!isValidSRCode(sr)) {
       $('formError').textContent = 'Invalid SR Code format. Use XX-XXXXX (e.g. 24-12345).';
+      return;
+    }
+
+    if (!pwd) {
+      $('formError').textContent = 'Please enter the canteen access password.';
+      return;
+    }
+
+    if (pwd !== ACCESS_PASSWORD) {
+      $('formError').textContent = 'Incorrect password. Please enter the valid canteen password.';
       return;
     }
 
@@ -1563,6 +1601,7 @@ window.addEventListener('DOMContentLoaded', () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         sr_code: sr,
+        password: pwd,
         table_id: selectedTable.id,
         party: party
       })
@@ -1685,7 +1724,7 @@ window.addEventListener('DOMContentLoaded', () => {
     fetch('/api/seat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(pendingSession)
+      body: JSON.stringify({ ...pendingSession, password: ACCESS_PASSWORD })
     })
       .then(res => res.json())
       .then(data => {

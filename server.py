@@ -6,6 +6,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 
 STATE_FILE = 'canteen_state.json'
 SR_CODE_PATTERN = re.compile(r'^\d{2}-\d{5}$')
+ACCESS_PASSWORD = 'batstateu'
 REGULAR_AUTO_EXPIRE_SECONDS = 21 * 60  # 20 mins + 60s "Are you still there?" grace period
 
 
@@ -207,8 +208,16 @@ class VaCanteenServer(BaseHTTPRequestHandler):
         if self.path == '/api/checkin':
             cleanup_expired()
             sr_code = (data.get('sr_code') or '').strip()
+            password = (data.get('password') or '').strip()
             table_id = data.get('table_id')
             party = int(data.get('party', 1))
+
+            if password != ACCESS_PASSWORD:
+                self._send_json(401, {
+                    "status": "error",
+                    "message": "Incorrect canteen access password."
+                })
+                return
 
             if not is_valid_sr_code(sr_code):
                 self._send_json(400, {
@@ -237,8 +246,16 @@ class VaCanteenServer(BaseHTTPRequestHandler):
         elif self.path == '/api/seat':
             cleanup_expired()
             sr_code = (data.get('srCode') or '').strip()
+            password = (data.get('password') or '').strip()
             table_id = data.get('tableId')
             seat_numbers = [int(x) for x in (data.get('selectedSeatNumbers') or [])]
+
+            if password != ACCESS_PASSWORD:
+                self._send_json(401, {
+                    "status": "error",
+                    "message": "Incorrect canteen access password."
+                })
+                return
 
             if not is_valid_sr_code(sr_code):
                 self._send_json(400, {
