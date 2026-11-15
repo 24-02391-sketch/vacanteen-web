@@ -8,8 +8,8 @@ STATE_FILE = 'canteen_state.json'
 SR_CODE_PATTERN = re.compile(r'^\d{2}-\d{5}$')
 ACCESS_PASSWORD = 'batstateu'
 
-# 3 mins regular time
-REGULAR_AUTO_EXPIRE_SECONDS = 3 * 60  
+# UPDATED: Changed from 21 * 60 to 4 * 60 (3 mins regular time + 60s grace period for testing)
+REGULAR_AUTO_EXPIRE_SECONDS = 4 * 60  
 
 
 def is_valid_sr_code(sr_code):
@@ -188,10 +188,10 @@ class VaCanteenServer(BaseHTTPRequestHandler):
             self.send_header('Content-type', 'text/html')
             self.end_headers()
             try:
-                with open('VaCanteen Frontend_3.html', 'rb') as file:
+                with open('VaCanteen Frontend.html', 'rb') as file:
                     self.wfile.write(file.read())
             except FileNotFoundError:
-                self.wfile.write(b"Error: 'VaCanteen Frontend_3.html' not found.")
+                self.wfile.write(b"Error: 'VaCanteen Frontend.html' not found.")
         elif self.path == '/api/state':
             cleanup_expired()
             self._send_json(200, {"sessions": active_sessions_heap.heap})
@@ -306,13 +306,8 @@ class VaCanteenServer(BaseHTTPRequestHandler):
 
         elif self.path == '/api/keepalive':
             session_id = data.get('id')
-            is_wrapup = data.get('wrapup', False)
             now_ms = int(time.time() * 1000)
-            
-            # If wrapping up, they only get 30 seconds. Otherwise, reset the full regular timer.
-            added_time = 30 if is_wrapup else REGULAR_AUTO_EXPIRE_SECONDS
-            new_expire = time.time() + added_time
-            
+            new_expire = time.time() + REGULAR_AUTO_EXPIRE_SECONDS
             updated = active_sessions_heap.update_expire_by_id(session_id, new_expire, now_ms)
             if updated:
                 save_state()
