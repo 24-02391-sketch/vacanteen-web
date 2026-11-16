@@ -604,7 +604,7 @@ button:disabled { cursor:not-allowed; }
     <p class="text-sm text-canteen-muted font-bold mt-2 leading-relaxed">
       You have been seated for a while. Please confirm if you are still using your table, or your seats will automatically be released in:
     </p>
-    <div id="stillThereCountdown" class="font-mono font-black text-5xl text-amber-600 my-4">60s</div>
+    <div id="stillThereCountdown" class="font-mono font-black text-5xl text-amber-600 my-4">10s</div>
     <div class="space-y-3 mt-5">
       <button id="confirmStillHere" type="button" class="w-full py-4 px-6 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-base shadow-lg">Yes, I’m Still Here</button>
       <button id="leaveFromStillThere" type="button" class="w-full py-3.5 px-6 rounded-2xl bg-slate-900 hover:bg-slate-950 text-white font-extrabold text-sm shadow">I’m Leaving Now</button>
@@ -616,7 +616,7 @@ button:disabled { cursor:not-allowed; }
 const CAPACITY = 6;
 const ACCESS_PASSWORD = 'batstateu';
 const REGULAR_IDLE_PROMPT_SEC = 3 * 60; 
-const STILL_THERE_GRACE_SEC = 60;        
+const STILL_THERE_GRACE_SEC = 10;        
 
 const baseTables = [
   {id:1,x:58.5,y:79.0,occupied:0,occupiedSeats:[]},
@@ -864,7 +864,6 @@ function renderStats() {
   $('seatProgress').style.width = sp + '%';
 }
 
-// UPDATED: Combined filter logic mapping to both status and available seats
 function applyFilter() {
   const q = $('searchInput').value.trim().toLowerCase();
 
@@ -1163,7 +1162,6 @@ function syncFromServer() {
       if (savedMyId) {
         const foundMine = sessions.find(s => s.id === savedMyId);
         if (foundMine) {
-          // Carry over frontend state wrappingUp 
           if (userActiveSession && userActiveSession.wrappingUp) {
             foundMine.wrappingUp = true;
             foundMine.wrapUpDeadline = userActiveSession.wrapUpDeadline;
@@ -1494,15 +1492,13 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // UPDATED: "I'm Still Here" grants 30 extra seconds to leave.
   $('confirmStillHere').addEventListener('click', () => {
     if (!userActiveSession) return;
     const nowMs = Date.now();
     userActiveSession.lastConfirmedAt = nowMs;
     
-    // Move to Wrap-Up State
     userActiveSession.wrappingUp = true;
-    userActiveSession.wrapUpDeadline = nowMs + 30000; // 30 seconds
+    userActiveSession.wrapUpDeadline = nowMs + 30000; 
     stillThereDeadline = null;
 
     const inList = sessions.find(s => s.id === userActiveSession.id);
