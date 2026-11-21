@@ -503,13 +503,13 @@ button:disabled { cursor:not-allowed; }
       <div id="durationField" hidden>
         <label for="duration" class="block text-xs font-extrabold text-canteen-ink mb-1.5">Rush Hour Stay Duration</label>
         <select id="duration" class="w-full h-12 px-4 rounded-xl border border-canteen-border text-sm font-bold outline-none bg-white">
-          <option value="10">10 Minutes</option>
-          <option value="15">15 Minutes</option>
-          <option value="20" selected>20 Minutes</option>
-          <option value="25">25 Minutes</option>
-          <option value="30">30 Minutes</option>
+          <option value="4">4 Minutes</option>
+          <option value="5">5 Minutes</option>
+          <option value="6" selected>6 Minutes</option>
+          <option value="7">7 Minutes</option>
+          <option value="8">8 Minutes</option>
         </select>
-        <p class="text-xs text-canteen-muted mt-1 font-medium">Rush hour enforced session limit: 10 to 30 mins.</p>
+        <p class="text-xs text-canteen-muted mt-1 font-medium">Rush hour enforced session limit: 4 to 8 mins.</p>
       </div>
     </div>
     <button id="continueCheckin" type="button" class="w-full py-4 px-5 rounded-2xl bg-maroon-800 hover:bg-maroon-900 text-white font-extrabold text-base shadow-lg">Continue To Seat Selection</button>
@@ -548,7 +548,7 @@ button:disabled { cursor:not-allowed; }
             </div>
             <div id="durationSummary" class="flex justify-between text-canteen-ink" hidden>
               <span class="text-canteen-muted">Session Limit</span>
-              <b id="durationSummaryValue" class="text-maroon-900 text-sm">20 minutes</b>
+              <b id="durationSummaryValue" class="text-maroon-900 text-sm">6 minutes</b>
             </div>
           </div>
         </div>
@@ -750,7 +750,7 @@ function resetCheckinForm() {
   }
   $('formError').textContent = '';
   $('partySize').value = '2';
-  $('duration').value = '20';
+  $('duration').value = '6';
   selectedSeats.clear();
 }
 
@@ -791,7 +791,7 @@ function formatSeatList(seatNums) {
 }
 
 function getEffectiveRushDuration(s) {
-  return (s && Number(s.duration) > 0) ? Number(s.duration) : 20;
+  return (s && Number(s.duration) > 0) ? Number(s.duration) : 6;
 }
 
 function getSessionRemainingSeconds(s) {
