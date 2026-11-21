@@ -100,7 +100,7 @@ button:disabled { cursor:not-allowed; }
   font-weight:400 !important;
 }
 
-.font-mono, #headerTime, #sessionClock, #stillThereCountdown, .session-time {
+.font-mono, #headerTime, #sessionClock, #wrapUpCountdown, .session-time {
   font-family:Consolas,'Courier New',monospace !important;
 }
 
@@ -597,17 +597,24 @@ button:disabled { cursor:not-allowed; }
   </div>
 </div>
 
-<div id="stillThereDialog" class="backdrop fixed inset-0 z-[60] flex items-center justify-center p-4 bg-maroon-950/80 backdrop-blur-md" aria-hidden="true">
+<div id="wrapUpDialog" class="backdrop fixed inset-0 z-[60] flex items-center justify-center p-4 bg-maroon-950/80 backdrop-blur-md" aria-hidden="true">
   <div class="dialog-content relative w-full max-w-md bg-white rounded-3xl border-2 border-amber-500 p-8 shadow-modal text-center overflow-hidden">
-    <div class="w-16 h-16 rounded-3xl bg-amber-100 text-amber-600 flex items-center justify-center font-black text-3xl mx-auto mb-4 animate-pulse">👋</div>
-    <h2 class="text-3xl font-display font-black text-maroon-950">Are you still there?</h2>
+    <div class="w-16 h-16 rounded-3xl bg-amber-100 text-amber-600 flex items-center justify-center font-black text-3xl mx-auto mb-4 animate-bounce">⏰</div>
+    <span class="inline-block px-3 py-1 rounded-full bg-amber-100 text-amber-900 text-xs font-black uppercase tracking-wider mb-2">
+      3-Minute Timer Ended
+    </span>
+    <h2 class="text-3xl font-display font-black text-maroon-950">Forgot to Tap “I’m Leaving”?</h2>
     <p class="text-sm text-canteen-muted font-bold mt-2 leading-relaxed">
-      You have been seated for a while. Please confirm if you are still using your table, or your seats will automatically be released in:
+      Your 3-minute session is over. Please wrap up and tap <strong>“I’m Leaving”</strong> below—you have a <strong>30-second wrap-up time</strong> before your seats are automatically released:
     </p>
-    <div id="stillThereCountdown" class="font-mono font-black text-5xl text-amber-600 my-4">10s</div>
+    <div id="wrapUpCountdown" class="font-mono font-black text-5xl text-amber-600 my-4">30s</div>
     <div class="space-y-3 mt-5">
-      <button id="confirmStillHere" type="button" class="w-full py-4 px-6 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-base shadow-lg">Yes, I’m Still Here</button>
-      <button id="leaveFromStillThere" type="button" class="w-full py-3.5 px-6 rounded-2xl bg-slate-900 hover:bg-slate-950 text-white font-extrabold text-sm shadow">I’m Leaving Now</button>
+      <button id="leaveFromWrapUp" type="button" class="w-full py-4 px-6 rounded-2xl bg-maroon-800 hover:bg-maroon-900 text-white font-black text-base shadow-lg flex items-center justify-center gap-2">
+        <span>👋</span> I’m Leaving Now
+      </button>
+      <button id="acknowledgeWrapUp" type="button" class="w-full py-3 px-6 rounded-2xl bg-canteen-paper hover:bg-amber-100 text-maroon-950 font-extrabold text-sm border border-canteen-border">
+        Got It (Wrap Up in 30s)
+      </button>
     </div>
   </div>
 </div>
@@ -615,8 +622,8 @@ button:disabled { cursor:not-allowed; }
 <script>
 const CAPACITY = 6;
 const ACCESS_PASSWORD = 'batstateu';
-const REGULAR_IDLE_PROMPT_SEC = 3 * 60; 
-const STILL_THERE_GRACE_SEC = 10;        
+const REGULAR_IDLE_PROMPT_SEC = 3 * 60; // 3 minutes
+const WRAP_UP_SECONDS = 30;             // 30-second wrap-up window
 
 const baseTables = [
   {id:1,x:58.5,y:79.0,occupied:0,occupiedSeats:[]},
@@ -660,10 +667,30 @@ let pendingSession = null;
 let userActiveSession = null;
 let activeFilter = 'all';
 let hasOccupancyActivity = false;
-let stillThereDeadline = null;
 
 const $ = id => document.getElementById(id);
 const pad = n => String(n).padStart(2,'0');
+
+function playReminderChime() {
+  try {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(880, ctx.currentTime);
+    osc.frequency.setValueAtTime(1046.5, ctx.currentTime + 0.15);
+    gain.gain.setValueAtTime(0.15, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.45);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.45);
+  } catch (e) {
+    // Ignore if browser blocks autoplay audio
+  }
+}
 
 function isValidSRCode(sr) {
   return /^\d{2}-\d{5}$/.test(sr) && sr !== '00-00000';
@@ -796,7 +823,9 @@ function restoreSeatedSessionModal(sessionObj) {
     `You are currently seated at Table ${pad(sessionObj.tableId)}. Tap "I’m Leaving Table" when finished.`;
 
   if (sessionObj.wrappingUp) {
+    const remain = Math.max(0, Math.ceil((sessionObj.wrapUpDeadline - Date.now()) / 1000));
     $('sessionTimerSubLabel').textContent = 'Wrapping Up - Auto Release In';
+    $('sessionClock').textContent = fmtTime(remain);
   } else if (isRushHour()) {
     $('sessionTimerSubLabel').textContent = 'Rush Hour Time Remaining';
     $('sessionClock').textContent = fmtTime(getSessionRemainingSeconds(sessionObj));
@@ -806,7 +835,7 @@ function restoreSeatedSessionModal(sessionObj) {
     $('sessionClock').textContent = fmtTime(elapsed);
   }
 
-  if (!$('stillThereDialog').classList.contains('open') && !$('timesUpDialog').classList.contains('open')) {
+  if (!$('wrapUpDialog').classList.contains('open') && !$('timesUpDialog').classList.contains('open')) {
     openDialog('sessionDialog');
   }
 }
@@ -963,11 +992,11 @@ function renderSessions() {
     }
 
     if (isMySession) {
-        row.classList.add('cursor-pointer', 'ring-2', 'ring-maroon-300');
-        row.title = "Click to open your session timer";
-        row.addEventListener('click', () => {
-            restoreSeatedSessionModal(userActiveSession);
-        });
+      row.classList.add('cursor-pointer', 'ring-2', 'ring-maroon-300');
+      row.title = 'Click to open your session timer';
+      row.addEventListener('click', () => {
+        restoreSeatedSessionModal(userActiveSession);
+      });
     }
 
     if (isTop) {
@@ -1022,7 +1051,6 @@ function renderSessions() {
 }
 
 function triggerTimesUp() {
-  stillThereDeadline = null;
   if (!$('timesUpDialog').classList.contains('open')) {
     openDialog('timesUpDialog');
   }
@@ -1114,7 +1142,6 @@ function releaseSession(sessionToRelease, noticeMessage = '') {
   if (userActiveSession && userActiveSession.id === sessionToRelease.id) {
     userActiveSession = null;
     pendingSession = null;
-    stillThereDeadline = null;
     localStorage.removeItem('vacanteen_my_session');
   }
 
@@ -1165,16 +1192,23 @@ function syncFromServer() {
           if (userActiveSession && userActiveSession.wrappingUp) {
             foundMine.wrappingUp = true;
             foundMine.wrapUpDeadline = userActiveSession.wrapUpDeadline;
+          } else if (Number(foundMine.duration) === 0 && foundMine.expire_time) {
+            const windowSec = foundMine.expire_time - ((foundMine.lastConfirmedAt || foundMine.startedAt) / 1000);
+            if (windowSec > 0 && windowSec <= WRAP_UP_SECONDS + 5) {
+              foundMine.wrappingUp = true;
+              foundMine.wrapUpDeadline = foundMine.expire_time * 1000;
+            }
           }
+
           userActiveSession = foundMine;
           pendingSession = foundMine;
-          if (!$('sessionDialog').classList.contains('open') && !$('stillThereDialog').classList.contains('open')) {
-             restoreSeatedSessionModal(foundMine);
+
+          if (!$('sessionDialog').classList.contains('open') && !$('wrapUpDialog').classList.contains('open')) {
+            restoreSeatedSessionModal(foundMine);
           }
         } else {
           userActiveSession = null;
           pendingSession = null;
-          stillThereDeadline = null;
           localStorage.removeItem('vacanteen_my_session');
           $('sessionCloseBtn').classList.remove('hidden');
           $('backToSeats').classList.remove('hidden');
@@ -1187,8 +1221,8 @@ function syncFromServer() {
 }
 
 window.addEventListener('DOMContentLoaded', () => {
-  if ("Notification" in window && Notification.permission !== "granted" && Notification.permission !== "denied") {
-      Notification.requestPermission();
+  if ('Notification' in window && Notification.permission !== 'granted' && Notification.permission !== 'denied') {
+    Notification.requestPermission();
   }
 
   updateModeUI();
@@ -1202,7 +1236,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
   function updateClock() {
     $('headerTime').textContent = new Intl.DateTimeFormat('en-PH', {
-        timeZone: 'Asia/Manila', hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true
+      timeZone: 'Asia/Manila', hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true
     }).format(new Date());
 
     const rush = isRushHour();
@@ -1211,15 +1245,18 @@ window.addEventListener('DOMContentLoaded', () => {
 
     if (userActiveSession && userActiveSession.seated) {
       if (userActiveSession.wrappingUp) {
-        $('sessionTimerSubLabel').textContent = 'Wrapping Up - Auto Release In';
         const remain = Math.max(0, Math.ceil((userActiveSession.wrapUpDeadline - Date.now()) / 1000));
+        $('sessionTimerSubLabel').textContent = 'Wrapping Up - Auto Release In';
         $('sessionClock').textContent = fmtTime(remain);
+        $('wrapUpCountdown').textContent = remain + 's';
 
         if (remain <= 0) {
-          releaseSession(userActiveSession, 'Your table was automatically released after the 30-second wrap-up period.');
+          releaseSession(
+            userActiveSession,
+            'Your 30-second wrap-up time has ended. Your table has been automatically released.'
+          );
         }
       } else if (rush) {
-        stillThereDeadline = null;
         $('sessionTimerSubLabel').textContent = 'Rush Hour Time Remaining';
         const remain = getSessionRemainingSeconds(userActiveSession);
         $('sessionClock').textContent = fmtTime(remain);
@@ -1233,27 +1270,33 @@ window.addEventListener('DOMContentLoaded', () => {
         const sinceConfirmSec = (Date.now() - lastConfirm) / 1000;
 
         if (sinceConfirmSec >= REGULAR_IDLE_PROMPT_SEC) {
-          if (!stillThereDeadline) {
-            stillThereDeadline = Date.now() + STILL_THERE_GRACE_SEC * 1000;
-            openDialog('stillThereDialog');
-            
-            if ("Notification" in window && Notification.permission === "granted") {
-                const notif = new Notification("VaCanteen: Still there?", {
-                    body: "Your 3-minute timer is almost up! Please confirm you are still at your table to keep your seat.",
-                    vibrate: [200, 100, 200],
-                    requireInteraction: true 
-                });
-                notif.onclick = function() {
-                    window.focus();
-                    notif.close();
-                };
-            }
-          }
-          const graceLeft = Math.max(0, Math.ceil((stillThereDeadline - Date.now()) / 1000));
-          $('stillThereCountdown').textContent = graceLeft + 's';
+          const nowMs = Date.now();
+          userActiveSession.wrappingUp = true;
+          userActiveSession.wrapUpDeadline = nowMs + WRAP_UP_SECONDS * 1000;
 
-          if (graceLeft <= 0) {
-            releaseSession(userActiveSession, 'Your table was automatically released after no response to the check-in.');
+          // Sync the 30-second wrap-up window with server.py's SessionMinHeap
+          fetch('/api/keepalive', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: userActiveSession.id, extra_seconds: WRAP_UP_SECONDS })
+          }).catch(err => console.error('Keepalive error:', err));
+
+          // 1. Pop up the in-app wrap-up reminder modal
+          $('wrapUpCountdown').textContent = WRAP_UP_SECONDS + 's';
+          openDialog('wrapUpDialog');
+          playReminderChime();
+
+          // 2. Trigger system/browser notification
+          if ('Notification' in window && Notification.permission === 'granted') {
+            const notif = new Notification("VaCanteen: Forgot to tap 'I'm Leaving'?", {
+              body: "Your 3-minute timer is over! Please tap 'I'm Leaving' — you have a 30-second wrap-up time before your seat is released.",
+              vibrate: [200, 100, 200],
+              requireInteraction: true
+            });
+            notif.onclick = function () {
+              window.focus();
+              notif.close();
+            };
           }
         }
       }
@@ -1289,8 +1332,8 @@ window.addEventListener('DOMContentLoaded', () => {
       activeFilter = b.dataset.filter;
       
       let label = b.textContent.trim();
-      if(activeFilter.startsWith('seat-')){
-          label = label.split(' ')[0] + " Seats";
+      if (activeFilter.startsWith('seat-')) {
+        label = label.split(' ')[0] + ' Seats';
       }
       $('filterLabel').textContent = label;
       
@@ -1303,8 +1346,8 @@ window.addEventListener('DOMContentLoaded', () => {
   $('searchInput').addEventListener('input', applyFilter);
 
   $('chooseTable').addEventListener('click', () => {
-    if ("Notification" in window && Notification.permission === "default") {
-       Notification.requestPermission();
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
     }
 
     if (!selectedTable || available(selectedTable) <= 0) return;
@@ -1347,8 +1390,8 @@ window.addEventListener('DOMContentLoaded', () => {
   $('accessPassword').addEventListener('input', () => $('formError').textContent = '');
 
   $('continueCheckin').addEventListener('click', () => {
-    if ("Notification" in window && Notification.permission === "default") {
-       Notification.requestPermission();
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
     }
     const sr = $('srCode').value.trim();
     const pwd = $('accessPassword').value.trim();
@@ -1380,7 +1423,7 @@ window.addEventListener('DOMContentLoaded', () => {
     })
       .then(response => response.json())
       .then(data => {
-        if (data.status === "error") {
+        if (data.status === 'error') {
           $('formError').textContent = data.message;
         } else {
           $('formError').textContent = '';
@@ -1396,7 +1439,7 @@ window.addEventListener('DOMContentLoaded', () => {
       })
       .catch(error => {
         console.error('Backend Error:', error);
-        $('formError').textContent = "Cannot connect to server. Is python server.py running?";
+        $('formError').textContent = 'Cannot connect to server. Is python server.py running?';
       });
   });
 
@@ -1440,6 +1483,9 @@ window.addEventListener('DOMContentLoaded', () => {
   $('backToSeats').addEventListener('click', () => openDialog('seatsDialog'));
 
   $('seatedButton').addEventListener('click', () => {
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
     if (!pendingSession || pendingSession.seated) return;
     if (available(selectedTable) < pendingSession.seats) return;
 
@@ -1481,7 +1527,9 @@ window.addEventListener('DOMContentLoaded', () => {
   });
 
   $('leavingButton').addEventListener('click', () => {
-    if (userActiveSession) releaseSession(userActiveSession);
+    if (userActiveSession) {
+      releaseSession(userActiveSession, 'Thank you! Your table has been released.');
+    }
   });
 
   $('dismissTimesUp').addEventListener('click', () => {
@@ -1492,32 +1540,16 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  $('confirmStillHere').addEventListener('click', () => {
-    if (!userActiveSession) return;
-    const nowMs = Date.now();
-    userActiveSession.lastConfirmedAt = nowMs;
-    
-    userActiveSession.wrappingUp = true;
-    userActiveSession.wrapUpDeadline = nowMs + 30000; 
-    stillThereDeadline = null;
-
-    const inList = sessions.find(s => s.id === userActiveSession.id);
-    if (inList) {
-      inList.lastConfirmedAt = nowMs;
+  $('leaveFromWrapUp').addEventListener('click', () => {
+    if (userActiveSession) {
+      releaseSession(userActiveSession, 'Thank you! Your table has been released.');
     }
-
-    fetch('/api/keepalive', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: userActiveSession.id, extra_seconds: 30 })
-    }).catch(err => console.error('Keepalive error:', err));
-
-    openDialog('sessionDialog');
-    restoreSeatedSessionModal(userActiveSession);
   });
 
-  $('leaveFromStillThere').addEventListener('click', () => {
-    if (userActiveSession) releaseSession(userActiveSession);
+  $('acknowledgeWrapUp').addEventListener('click', () => {
+    if (!userActiveSession) return;
+    openDialog('sessionDialog');
+    restoreSeatedSessionModal(userActiveSession);
   });
 
 });
