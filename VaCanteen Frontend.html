@@ -843,10 +843,53 @@ function closeDialogs(force = false) {
     x.classList.remove('open');
     x.setAttribute('aria-hidden','true');
   });
+  stopAlertSound();
   document.body.style.overflow = '';
   if (!userActiveSession) {
     resetCheckinForm();
   }
+}
+
+let alertAudioContext = null;
+let alertSoundInterval = null;
+
+function playAlertTone() {
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContextClass) return;
+
+  try {
+    alertAudioContext ||= new AudioContextClass();
+    if (alertAudioContext.state === 'suspended') alertAudioContext.resume();
+    const startAt = alertAudioContext.currentTime;
+    [1040, 780].forEach((frequency, index) => {
+      const noteStart = startAt + index * 0.28;
+      const oscillator = alertAudioContext.createOscillator();
+      const gain = alertAudioContext.createGain();
+      oscillator.type = 'triangle';
+      oscillator.frequency.value = frequency;
+      gain.gain.setValueAtTime(0.0001, noteStart);
+      gain.gain.exponentialRampToValueAtTime(0.55, noteStart + 0.02);
+      gain.gain.setValueAtTime(0.55, noteStart + 0.16);
+      gain.gain.exponentialRampToValueAtTime(0.0001, noteStart + 0.22);
+      oscillator.connect(gain);
+      gain.connect(alertAudioContext.destination);
+      oscillator.start(noteStart);
+      oscillator.stop(noteStart + 0.23);
+    });
+  } catch (err) {
+    console.warn('Alert sound could not be played:', err);
+  }
+}
+
+function startAlertSound() {
+  stopAlertSound();
+  playAlertTone();
+  alertSoundInterval = setInterval(playAlertTone, 800);
+}
+
+function stopAlertSound() {
+  if (alertSoundInterval) clearInterval(alertSoundInterval);
+  alertSoundInterval = null;
 }
 
 function fmtTime(sec) {
@@ -1413,6 +1456,7 @@ window.addEventListener('DOMContentLoaded', () => {
         $('timesUpCountdown').textContent = remain + 's';
 
         if (remain <= 0) {
+          stopAlertSound();
           releaseSession(
             userActiveSession,
             'Time’s up! Your table has been automatically vacated after 30 seconds.'
@@ -1453,6 +1497,7 @@ window.addEventListener('DOMContentLoaded', () => {
         $('wrapUpCountdown').textContent = remain + 's';
 
         if (remain <= 0) {
+          stopAlertSound();
           releaseSession(
             userActiveSession,
             'Your 30-second wrap-up time has ended. Your table has been automatically released.'
@@ -1486,6 +1531,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
           $('wrapUpCountdown').textContent = WRAP_UP_SECONDS + 's';
           openDialog('wrapUpDialog');
+          startAlertSound();
 
           sendDeviceNotification(
             "VaCanteen: Forgot to tap 'I'm Leaving'?",
@@ -1747,12 +1793,14 @@ window.addEventListener('DOMContentLoaded', () => {
   });
 
   $('leaveFromWrapUp').addEventListener('click', () => {
+    stopAlertSound();
     if (userActiveSession) {
       releaseSession(userActiveSession, 'Thank you! Your table has been released.');
     }
   });
 
   $('acknowledgeWrapUp').addEventListener('click', () => {
+    stopAlertSound();
     if (!userActiveSession) return;
     openDialog('sessionDialog');
     restoreSeatedSessionModal(userActiveSession);
