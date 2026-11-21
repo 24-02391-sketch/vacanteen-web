@@ -8,7 +8,9 @@ STATE_FILE = 'canteen_state.json'
 SR_CODE_PATTERN = re.compile(r'^\d{2}-\d{5}$')
 ACCESS_PASSWORD = 'batstateu'
 
-REGULAR_AUTO_EXPIRE_SECONDS = 4 * 60  
+REGULAR_AUTO_EXPIRE_SECONDS = 4 * 60
+RUSH_PROMPT_BUFFER_SECONDS = 3 * 60  # Holds seats while awaiting "I'm Still Seated" / "I'm Leaving"
+TIMES_UP_GRACE_SECONDS = 30          # 30-second final window after tapping "I'm Still Seated"
 
 
 def is_valid_sr_code(sr_code):
@@ -41,7 +43,7 @@ class SRCodeBST:
     def search(self, root, sr_code):
         if root is None or root.sr_code == sr_code:
             return root
-        if root.sr_code < sr_code:
+        if sr_code < root.sr_code:
             return self.search(root.right, sr_code)
         return self.search(root.left, sr_code)
 
@@ -111,11 +113,13 @@ class SessionMinHeap:
                 return s
         return None
 
-    def update_expire_by_id(self, session_id, new_expire_time, new_confirmed_ms):
+    def update_expire_by_id(self, session_id, new_expire_time, new_confirmed_ms, times_up=False):
         for idx, s in enumerate(self.heap):
             if s.get('id') == session_id:
                 s['expire_time'] = new_expire_time
                 s['lastConfirmedAt'] = new_confirmed_ms
+                if times_up:
+                    s['timesUp'] = True
                 self._heapify_up(idx)
                 self._heapify_down(idx)
                 return s
@@ -283,7 +287,11 @@ class VaCanteenServer(BaseHTTPRequestHandler):
             duration = int(data.get('duration', 0))
             started_ms = data.get('startedAt', int(time.time() * 1000))
             started_sec = started_ms / 1000.0
-            expire_time = (started_sec + duration * 60) if duration > 0 else (started_sec + REGULAR_AUTO_EXPIRE_SECONDS)
+            expire_time = (
+                (started_sec + duration * 60 + RUSH_PROMPT_BUFFER_SECONDS)
+                if duration > 0
+                else (started_sec + REGULAR_AUTO_EXPIRE_SECONDS)
+            )
 
             session_record = {
                 "id": data.get('id'),
@@ -295,6 +303,7 @@ class VaCanteenServer(BaseHTTPRequestHandler):
                 "lastConfirmedAt": started_ms,
                 "duration": duration,
                 "seated": True,
+                "timesUp": False,
                 "expire_time": expire_time
             }
 
@@ -306,12 +315,14 @@ class VaCanteenServer(BaseHTTPRequestHandler):
         elif self.path == '/api/keepalive':
             session_id = data.get('id')
             now_ms = int(time.time() * 1000)
-            
-            # Use extra_seconds to determine new expiration time (used for the 30-second wrap up)
-            extra_seconds = int(data.get('extra_seconds', REGULAR_AUTO_EXPIRE_SECONDS))
+
+            extra_seconds = int(data.get('extra_seconds', TIMES_UP_GRACE_SECONDS))
+            times_up = bool(data.get('times_up', False))
             new_expire = time.time() + extra_seconds
-            
-            updated = active_sessions_heap.update_expire_by_id(session_id, new_expire, now_ms)
+
+            updated = active_sessions_heap.update_expire_by_id(
+                session_id, new_expire, now_ms, times_up=times_up
+            )
             if updated:
                 save_state()
                 self._send_json(200, {"status": "success", "lastConfirmedAt": now_ms})

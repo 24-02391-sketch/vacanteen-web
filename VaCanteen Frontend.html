@@ -100,7 +100,7 @@ button:disabled { cursor:not-allowed; }
   font-weight:400 !important;
 }
 
-.font-mono, #headerTime, #sessionClock, #wrapUpCountdown, .session-time {
+.font-mono, #headerTime, #sessionClock, #wrapUpCountdown, #timesUpCountdown, .session-time {
   font-family:Consolas,'Courier New',monospace !important;
 }
 
@@ -586,17 +586,45 @@ button:disabled { cursor:not-allowed; }
   </div>
 </div>
 
-<div id="timesUpDialog" class="backdrop fixed inset-0 z-50 flex items-center justify-center p-4 bg-maroon-950/80 backdrop-blur-md" aria-hidden="true">
+<!-- Rush Hour Countdown 0 Prompt: "I'm Still Seated" or "I'm Leaving" -->
+<div id="rushPromptDialog" class="backdrop fixed inset-0 z-[60] flex items-center justify-center p-4 bg-maroon-950/80 backdrop-blur-md" aria-hidden="true">
+  <div class="dialog-content relative w-full max-w-md bg-white rounded-3xl border-2 border-amber-500 p-8 shadow-modal text-center overflow-hidden">
+    <div class="w-16 h-16 rounded-3xl bg-amber-100 text-amber-600 flex items-center justify-center font-black text-3xl mx-auto mb-4 animate-bounce">⏰</div>
+    <span class="inline-block px-3 py-1 rounded-full bg-amber-100 text-amber-900 text-xs font-black uppercase tracking-wider mb-2">
+      Rush Hour Countdown Ended
+    </span>
+    <h2 class="text-3xl font-display font-black text-maroon-950">Are You Still Seated?</h2>
+    <p class="text-sm text-canteen-muted font-bold mt-2 leading-relaxed">
+      Your rush hour countdown has reached <strong>00:00:00</strong>. Please confirm below whether you are still seated or leaving the table.
+    </p>
+    <div class="space-y-3 mt-6">
+      <button id="stillSeatedRushBtn" type="button" class="w-full py-4 px-6 rounded-2xl bg-maroon-800 hover:bg-maroon-900 text-white font-black text-base shadow-lg">
+        I’m Still Seated
+      </button>
+      <button id="leaveFromRushPromptBtn" type="button" class="w-full py-4 px-6 rounded-2xl bg-slate-900 hover:bg-slate-950 text-white font-black text-base shadow-lg flex items-center justify-center gap-2">
+        <span>👋</span> I’m Leaving
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- 30-Second Time's Up Auto-Vacate Popup (shown after clicking "I'm Still Seated") -->
+<div id="timesUpDialog" class="backdrop fixed inset-0 z-[60] flex items-center justify-center p-4 bg-maroon-950/80 backdrop-blur-md" aria-hidden="true">
   <div class="dialog-content relative w-full max-w-md bg-white rounded-3xl border-2 border-rose-500 p-8 shadow-modal text-center overflow-hidden">
     <div class="w-16 h-16 rounded-3xl bg-rose-100 text-rose-600 flex items-center justify-center font-black text-3xl mx-auto mb-4 animate-bounce">⌛</div>
+    <span class="inline-block px-3 py-1 rounded-full bg-rose-100 text-rose-900 text-xs font-black uppercase tracking-wider mb-2">
+      Rush Hour Limit Reached
+    </span>
     <h2 class="text-3xl font-display font-black text-maroon-950">Time’s Up!</h2>
-    <p class="text-sm text-canteen-muted font-bold mt-2 mb-6 leading-relaxed">
-      Your rush hour dining window has concluded. Please vacate the table so waiting students can be seated.
+    <p class="text-sm text-canteen-muted font-bold mt-2 leading-relaxed">
+      Your rush hour dining window has concluded. Please vacate the table—your seats will automatically be released in:
     </p>
+    <div id="timesUpCountdown" class="font-mono font-black text-5xl text-rose-600 my-4">30s</div>
     <button id="dismissTimesUp" type="button" class="w-full py-4 px-6 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white font-black text-base shadow-lg">Vacate Table & Finish</button>
   </div>
 </div>
 
+<!-- Regular Hours (Non-Rush Hour) 3-Minute Reminder Popup -->
 <div id="wrapUpDialog" class="backdrop fixed inset-0 z-[60] flex items-center justify-center p-4 bg-maroon-950/80 backdrop-blur-md" aria-hidden="true">
   <div class="dialog-content relative w-full max-w-md bg-white rounded-3xl border-2 border-amber-500 p-8 shadow-modal text-center overflow-hidden">
     <div class="w-16 h-16 rounded-3xl bg-amber-100 text-amber-600 flex items-center justify-center font-black text-3xl mx-auto mb-4 animate-bounce">⏰</div>
@@ -622,8 +650,9 @@ button:disabled { cursor:not-allowed; }
 <script>
 const CAPACITY = 6;
 const ACCESS_PASSWORD = 'batstateu';
-const REGULAR_IDLE_PROMPT_SEC = 3 * 60; // 3 minutes
-const WRAP_UP_SECONDS = 30;             // 30-second wrap-up window
+const REGULAR_IDLE_PROMPT_SEC = 3 * 60; // 3 minutes (Regular Hours)
+const WRAP_UP_SECONDS = 30;             // 30-second wrap-up window (Regular Hours)
+const TIMES_UP_GRACE_SECONDS = 30;      // 30-second Time's Up auto-vacate countdown (Rush Hour)
 
 const baseTables = [
   {id:1,x:58.5,y:79.0,occupied:0,occupiedSeats:[]},
@@ -822,6 +851,16 @@ function restoreSeatedSessionModal(sessionObj) {
   $('sessionMessage').textContent =
     `You are currently seated at Table ${pad(sessionObj.tableId)}. Tap "I’m Leaving Table" when finished.`;
 
+  if (sessionObj.timesUp) {
+    triggerTimesUp();
+    return;
+  }
+
+  if (sessionObj.rushPromptActive) {
+    triggerRushPrompt();
+    return;
+  }
+
   if (sessionObj.wrappingUp) {
     const remain = Math.max(0, Math.ceil((sessionObj.wrapUpDeadline - Date.now()) / 1000));
     $('sessionTimerSubLabel').textContent = 'Wrapping Up - Auto Release In';
@@ -835,7 +874,11 @@ function restoreSeatedSessionModal(sessionObj) {
     $('sessionClock').textContent = fmtTime(elapsed);
   }
 
-  if (!$('wrapUpDialog').classList.contains('open') && !$('timesUpDialog').classList.contains('open')) {
+  if (
+    !$('wrapUpDialog').classList.contains('open') &&
+    !$('timesUpDialog').classList.contains('open') &&
+    !$('rushPromptDialog').classList.contains('open')
+  ) {
     openDialog('sessionDialog');
   }
 }
@@ -974,8 +1017,14 @@ function renderSessions() {
 
   if (rush && userActiveSession) {
     const userS = processed.find(x => x.id === userActiveSession.id);
-    if (userS && userS.remain <= 0 && !userActiveSession.wrappingUp) {
-      triggerTimesUp();
+    if (
+      userS &&
+      userS.remain <= 0 &&
+      !userActiveSession.wrappingUp &&
+      !userActiveSession.rushPromptActive &&
+      !userActiveSession.timesUp
+    ) {
+      triggerRushPrompt();
     }
   }
 
@@ -1050,7 +1099,70 @@ function renderSessions() {
   });
 }
 
+// Step 1 when Rush Hour countdown hits 0: ask "I'm Still Seated" or "I'm Leaving"
+function triggerRushPrompt() {
+  if (!userActiveSession || userActiveSession.timesUp) return;
+
+  if (!userActiveSession.rushPromptActive) {
+    userActiveSession.rushPromptActive = true;
+    playReminderChime();
+
+    if ('Notification' in window && Notification.permission === 'granted') {
+      const notif = new Notification("VaCanteen: Rush Hour Countdown Ended", {
+        body: "Your countdown reached 00:00:00. Are you still seated or leaving?",
+        vibrate: [200, 100, 200],
+        requireInteraction: true
+      });
+      notif.onclick = function () {
+        window.focus();
+        notif.close();
+      };
+    }
+  }
+
+  $('sessionTimerSubLabel').textContent = 'Countdown Ended - Awaiting Response';
+  $('sessionClock').textContent = '00:00:00';
+
+  if (!$('rushPromptDialog').classList.contains('open')) {
+    openDialog('rushPromptDialog');
+  }
+}
+
+// Step 2 if user clicks "I'm Still Seated": 30-second Time's Up popup -> auto-vacate
 function triggerTimesUp() {
+  if (!userActiveSession) return;
+
+  userActiveSession.rushPromptActive = false;
+
+  if (!userActiveSession.timesUp) {
+    userActiveSession.timesUp = true;
+    userActiveSession.timesUpDeadline = Date.now() + TIMES_UP_GRACE_SECONDS * 1000;
+    $('timesUpCountdown').textContent = TIMES_UP_GRACE_SECONDS + 's';
+    playReminderChime();
+
+    fetch('/api/keepalive', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id: userActiveSession.id,
+        extra_seconds: TIMES_UP_GRACE_SECONDS,
+        times_up: true
+      })
+    }).catch(err => console.error('Keepalive error:', err));
+
+    if ('Notification' in window && Notification.permission === 'granted') {
+      const notif = new Notification("VaCanteen: Time's Up!", {
+        body: 'Your table will automatically be vacated in 30 seconds.',
+        vibrate: [200, 100, 200],
+        requireInteraction: true
+      });
+      notif.onclick = function () {
+        window.focus();
+        notif.close();
+      };
+    }
+  }
+
   if (!$('timesUpDialog').classList.contains('open')) {
     openDialog('timesUpDialog');
   }
@@ -1189,9 +1301,19 @@ function syncFromServer() {
       if (savedMyId) {
         const foundMine = sessions.find(s => s.id === savedMyId);
         if (foundMine) {
-          if (userActiveSession && userActiveSession.wrappingUp) {
+          if (userActiveSession && userActiveSession.timesUp) {
+            foundMine.timesUp = true;
+            foundMine.timesUpDeadline = userActiveSession.timesUpDeadline;
+          } else if (foundMine.timesUp && foundMine.expire_time) {
+            foundMine.timesUp = true;
+            foundMine.timesUpDeadline = foundMine.expire_time * 1000;
+          } else if (userActiveSession && userActiveSession.rushPromptActive) {
+            foundMine.rushPromptActive = true;
+          } else if (userActiveSession && userActiveSession.wrappingUp) {
             foundMine.wrappingUp = true;
             foundMine.wrapUpDeadline = userActiveSession.wrapUpDeadline;
+          } else if (Number(foundMine.duration) > 0 && getSessionRemainingSeconds(foundMine) <= 0) {
+            foundMine.rushPromptActive = true;
           } else if (Number(foundMine.duration) === 0 && foundMine.expire_time) {
             const windowSec = foundMine.expire_time - ((foundMine.lastConfirmedAt || foundMine.startedAt) / 1000);
             if (windowSec > 0 && windowSec <= WRAP_UP_SECONDS + 5) {
@@ -1203,7 +1325,16 @@ function syncFromServer() {
           userActiveSession = foundMine;
           pendingSession = foundMine;
 
-          if (!$('sessionDialog').classList.contains('open') && !$('wrapUpDialog').classList.contains('open')) {
+          if (foundMine.timesUp) {
+            triggerTimesUp();
+          } else if (foundMine.rushPromptActive) {
+            triggerRushPrompt();
+          } else if (
+            !$('sessionDialog').classList.contains('open') &&
+            !$('wrapUpDialog').classList.contains('open') &&
+            !$('timesUpDialog').classList.contains('open') &&
+            !$('rushPromptDialog').classList.contains('open')
+          ) {
             restoreSeatedSessionModal(foundMine);
           }
         } else {
@@ -1244,7 +1375,22 @@ window.addEventListener('DOMContentLoaded', () => {
     renderSessions();
 
     if (userActiveSession && userActiveSession.seated) {
-      if (userActiveSession.wrappingUp) {
+      if (userActiveSession.timesUp) {
+        const remain = Math.max(0, Math.ceil((userActiveSession.timesUpDeadline - Date.now()) / 1000));
+        $('sessionTimerSubLabel').textContent = 'Time’s Up - Auto Vacating In';
+        $('sessionClock').textContent = fmtTime(remain);
+        $('timesUpCountdown').textContent = remain + 's';
+
+        if (remain <= 0) {
+          releaseSession(
+            userActiveSession,
+            'Time’s up! Your table has been automatically vacated after 30 seconds.'
+          );
+        }
+      } else if (userActiveSession.rushPromptActive) {
+        $('sessionTimerSubLabel').textContent = 'Countdown Ended - Awaiting Response';
+        $('sessionClock').textContent = '00:00:00';
+      } else if (userActiveSession.wrappingUp) {
         const remain = Math.max(0, Math.ceil((userActiveSession.wrapUpDeadline - Date.now()) / 1000));
         $('sessionTimerSubLabel').textContent = 'Wrapping Up - Auto Release In';
         $('sessionClock').textContent = fmtTime(remain);
@@ -1260,7 +1406,9 @@ window.addEventListener('DOMContentLoaded', () => {
         $('sessionTimerSubLabel').textContent = 'Rush Hour Time Remaining';
         const remain = getSessionRemainingSeconds(userActiveSession);
         $('sessionClock').textContent = fmtTime(remain);
-        if (remain <= 0) triggerTimesUp();
+        if (remain <= 0) {
+          triggerRushPrompt();
+        }
       } else {
         $('sessionTimerSubLabel').textContent = 'Elapsed Seating Time';
         const elapsed = Math.max(0, (Date.now() - userActiveSession.startedAt) / 1000);
@@ -1274,19 +1422,16 @@ window.addEventListener('DOMContentLoaded', () => {
           userActiveSession.wrappingUp = true;
           userActiveSession.wrapUpDeadline = nowMs + WRAP_UP_SECONDS * 1000;
 
-          // Sync the 30-second wrap-up window with server.py's SessionMinHeap
           fetch('/api/keepalive', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ id: userActiveSession.id, extra_seconds: WRAP_UP_SECONDS })
           }).catch(err => console.error('Keepalive error:', err));
 
-          // 1. Pop up the in-app wrap-up reminder modal
           $('wrapUpCountdown').textContent = WRAP_UP_SECONDS + 's';
           openDialog('wrapUpDialog');
           playReminderChime();
 
-          // 2. Trigger system/browser notification
           if ('Notification' in window && Notification.permission === 'granted') {
             const notif = new Notification("VaCanteen: Forgot to tap 'I'm Leaving'?", {
               body: "Your 3-minute timer is over! Please tap 'I'm Leaving' — you have a 30-second wrap-up time before your seat is released.",
@@ -1532,9 +1677,21 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  // Rush Hour Prompt Actions ("I'm Still Seated" vs "I'm Leaving")
+  $('stillSeatedRushBtn').addEventListener('click', () => {
+    if (!userActiveSession) return;
+    triggerTimesUp();
+  });
+
+  $('leaveFromRushPromptBtn').addEventListener('click', () => {
+    if (userActiveSession) {
+      releaseSession(userActiveSession, 'Thank you! Your table has been released.');
+    }
+  });
+
   $('dismissTimesUp').addEventListener('click', () => {
     if (userActiveSession) {
-      releaseSession(userActiveSession);
+      releaseSession(userActiveSession, 'Thank you! Your table has been vacated.');
     } else {
       closeDialogs(true);
     }
