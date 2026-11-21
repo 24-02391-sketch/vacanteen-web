@@ -754,11 +754,14 @@ function sendDeviceNotification(title, body, tag = 'vacanteen-reminder') {
 
   if (Notification.permission === 'granted') {
     showNotif();
-  } else if (Notification.permission === 'default') {
-    Notification.requestPermission().then(perm => {
-      if (perm === 'granted') showNotif();
-    });
   }
+}
+
+function requestDeviceNotificationPermission() {
+  if (!('Notification' in window) || Notification.permission !== 'default') return;
+  Notification.requestPermission().catch(err => {
+    console.warn('Notification permission request failed:', err);
+  });
 }
 
 function isValidSRCode(sr) {
@@ -1426,10 +1429,6 @@ function syncFromServer() {
 }
 
 window.addEventListener('DOMContentLoaded', () => {
-  if ('Notification' in window && Notification.permission !== 'granted' && Notification.permission !== 'denied') {
-    Notification.requestPermission();
-  }
-
   updateModeUI();
   renderMap();
   syncFromServer();
@@ -1586,10 +1585,6 @@ window.addEventListener('DOMContentLoaded', () => {
   $('searchInput').addEventListener('input', applyFilter);
 
   $('chooseTable').addEventListener('click', () => {
-    if ('Notification' in window && Notification.permission === 'default') {
-      Notification.requestPermission();
-    }
-
     if (!selectedTable || available(selectedTable) <= 0) return;
 
     resetCheckinForm();
@@ -1630,9 +1625,6 @@ window.addEventListener('DOMContentLoaded', () => {
   $('accessPassword').addEventListener('input', () => $('formError').textContent = '');
 
   $('continueCheckin').addEventListener('click', () => {
-    if ('Notification' in window && Notification.permission === 'default') {
-      Notification.requestPermission();
-    }
     const sr = $('srCode').value.trim();
     const pwd = $('accessPassword').value.trim();
 
@@ -1723,11 +1715,11 @@ window.addEventListener('DOMContentLoaded', () => {
   $('backToSeats').addEventListener('click', () => openDialog('seatsDialog'));
 
   $('seatedButton').addEventListener('click', () => {
-    if ('Notification' in window && Notification.permission === 'default') {
-      Notification.requestPermission();
-    }
     if (!pendingSession || pendingSession.seated) return;
     if (available(selectedTable) < pendingSession.seats) return;
+
+    // Ask during this deliberate user action so browsers can show the permission prompt.
+    requestDeviceNotificationPermission();
 
     const nowMs = Date.now();
     pendingSession.seated = true;
