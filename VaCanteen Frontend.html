@@ -100,7 +100,7 @@ button:disabled { cursor:not-allowed; }
   font-weight:400 !important;
 }
 
-.font-mono, #headerTime, #sessionClock, #wrapUpCountdown, #timesUpCountdown, .session-time {
+.font-mono, #headerTime, #sessionClock, #wrapUpCountdown, #timesUpCountdown, #rushPromptCountdown, .session-time {
   font-family:Consolas,'Courier New',monospace !important;
 }
 
@@ -586,18 +586,19 @@ button:disabled { cursor:not-allowed; }
   </div>
 </div>
 
-<!-- Rush Hour Countdown 0 Prompt: "I'm Still Seated" or "I'm Leaving" -->
+<!-- Rush Hour Countdown 0 Prompt: 5s -> Device Notification Reminder -> +5s -> Auto-Vacate -->
 <div id="rushPromptDialog" class="backdrop fixed inset-0 z-[60] flex items-center justify-center p-4 bg-maroon-950/80 backdrop-blur-md" aria-hidden="true">
   <div class="dialog-content relative w-full max-w-md bg-white rounded-3xl border-2 border-amber-500 p-8 shadow-modal text-center overflow-hidden">
     <div class="w-16 h-16 rounded-3xl bg-amber-100 text-amber-600 flex items-center justify-center font-black text-3xl mx-auto mb-4 animate-bounce">⏰</div>
-    <span class="inline-block px-3 py-1 rounded-full bg-amber-100 text-amber-900 text-xs font-black uppercase tracking-wider mb-2">
+    <span id="rushPromptStatusBadge" class="inline-block px-3 py-1 rounded-full bg-amber-100 text-amber-900 text-xs font-black uppercase tracking-wider mb-2">
       Rush Hour Countdown Ended
     </span>
     <h2 class="text-3xl font-display font-black text-maroon-950">Are You Still Seated?</h2>
     <p class="text-sm text-canteen-muted font-bold mt-2 leading-relaxed">
-      Your rush hour countdown has reached <strong>00:00:00</strong>. Please confirm below whether you are still seated or leaving the table.
+      Your rush hour countdown reached <strong>00:00:00</strong>. Tap <strong>“I’m Still Seated”</strong> or <strong>“I’m Leaving”</strong> before the timer runs out:
     </p>
-    <div class="space-y-3 mt-6">
+    <div id="rushPromptCountdown" class="font-mono font-black text-5xl text-amber-600 my-4">10s</div>
+    <div class="space-y-3 mt-4">
       <button id="stillSeatedRushBtn" type="button" class="w-full py-4 px-6 rounded-2xl bg-maroon-800 hover:bg-maroon-900 text-white font-black text-base shadow-lg">
         I’m Still Seated
       </button>
@@ -652,6 +653,8 @@ const CAPACITY = 6;
 const ACCESS_PASSWORD = 'batstateu';
 const REGULAR_IDLE_PROMPT_SEC = 3 * 60; // 3 minutes (Regular Hours)
 const WRAP_UP_SECONDS = 30;             // 30-second wrap-up window (Regular Hours)
+const RUSH_PROMPT_NOTIFY_SEC = 5;       // 5s of no tap -> send device notification reminder
+const RUSH_PROMPT_TOTAL_SEC = 10;       // +5s (10s total) of still no response -> auto-vacate
 const TIMES_UP_GRACE_SECONDS = 30;      // 30-second Time's Up auto-vacate countdown (Rush Hour)
 
 const baseTables = [
@@ -710,7 +713,7 @@ function playReminderChime() {
     osc.type = 'sine';
     osc.frequency.setValueAtTime(880, ctx.currentTime);
     osc.frequency.setValueAtTime(1046.5, ctx.currentTime + 0.15);
-    gain.gain.setValueAtTime(0.15, ctx.currentTime);
+    gain.gain.setValueAtTime(0.18, ctx.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.45);
     osc.connect(gain);
     gain.connect(ctx.destination);
@@ -718,6 +721,43 @@ function playReminderChime() {
     osc.stop(ctx.currentTime + 0.45);
   } catch (e) {
     // Ignore if browser blocks autoplay audio
+  }
+}
+
+function sendDeviceNotification(title, body, tag = 'vacanteen-reminder') {
+  playReminderChime();
+  if ('vibrate' in navigator) {
+    try {
+      navigator.vibrate([300, 150, 300, 150, 300]);
+    } catch (e) {}
+  }
+
+  if (!('Notification' in window)) return;
+
+  const showNotif = () => {
+    try {
+      const notif = new Notification(title, {
+        body,
+        tag,
+        renotify: true,
+        vibrate: [300, 150, 300],
+        requireInteraction: true
+      });
+      notif.onclick = function () {
+        window.focus();
+        notif.close();
+      };
+    } catch (e) {
+      // Ignore if environment restricts Notification constructor
+    }
+  };
+
+  if (Notification.permission === 'granted') {
+    showNotif();
+  } else if (Notification.permission === 'default') {
+    Notification.requestPermission().then(perm => {
+      if (perm === 'granted') showNotif();
+    });
   }
 }
 
@@ -1099,25 +1139,19 @@ function renderSessions() {
   });
 }
 
-// Step 1 when Rush Hour countdown hits 0: ask "I'm Still Seated" or "I'm Leaving"
+// Step 1 when Rush Hour countdown hits 0:
+// Shows "I'm Still Seated" / "I'm Leaving" -> after 5s sends device notification -> after +5s (10s total) auto-vacates
 function triggerRushPrompt() {
   if (!userActiveSession || userActiveSession.timesUp) return;
 
   if (!userActiveSession.rushPromptActive) {
     userActiveSession.rushPromptActive = true;
+    userActiveSession.rushPromptStartedAt = Date.now();
+    userActiveSession.rushPromptNotified = false;
+    $('rushPromptStatusBadge').className = 'inline-block px-3 py-1 rounded-full bg-amber-100 text-amber-900 text-xs font-black uppercase tracking-wider mb-2';
+    $('rushPromptStatusBadge').textContent = 'Rush Hour Countdown Ended';
+    $('rushPromptCountdown').textContent = RUSH_PROMPT_TOTAL_SEC + 's';
     playReminderChime();
-
-    if ('Notification' in window && Notification.permission === 'granted') {
-      const notif = new Notification("VaCanteen: Rush Hour Countdown Ended", {
-        body: "Your countdown reached 00:00:00. Are you still seated or leaving?",
-        vibrate: [200, 100, 200],
-        requireInteraction: true
-      });
-      notif.onclick = function () {
-        window.focus();
-        notif.close();
-      };
-    }
   }
 
   $('sessionTimerSubLabel').textContent = 'Countdown Ended - Awaiting Response';
@@ -1138,7 +1172,6 @@ function triggerTimesUp() {
     userActiveSession.timesUp = true;
     userActiveSession.timesUpDeadline = Date.now() + TIMES_UP_GRACE_SECONDS * 1000;
     $('timesUpCountdown').textContent = TIMES_UP_GRACE_SECONDS + 's';
-    playReminderChime();
 
     fetch('/api/keepalive', {
       method: 'POST',
@@ -1150,17 +1183,11 @@ function triggerTimesUp() {
       })
     }).catch(err => console.error('Keepalive error:', err));
 
-    if ('Notification' in window && Notification.permission === 'granted') {
-      const notif = new Notification("VaCanteen: Time's Up!", {
-        body: 'Your table will automatically be vacated in 30 seconds.',
-        vibrate: [200, 100, 200],
-        requireInteraction: true
-      });
-      notif.onclick = function () {
-        window.focus();
-        notif.close();
-      };
-    }
+    sendDeviceNotification(
+      "VaCanteen: Time's Up!",
+      'Your rush hour dining window has ended. Your table will automatically vacate in 30 seconds.',
+      'vacanteen-times-up'
+    );
   }
 
   if (!$('timesUpDialog').classList.contains('open')) {
@@ -1309,11 +1336,15 @@ function syncFromServer() {
             foundMine.timesUpDeadline = foundMine.expire_time * 1000;
           } else if (userActiveSession && userActiveSession.rushPromptActive) {
             foundMine.rushPromptActive = true;
+            foundMine.rushPromptStartedAt = userActiveSession.rushPromptStartedAt;
+            foundMine.rushPromptNotified = userActiveSession.rushPromptNotified;
           } else if (userActiveSession && userActiveSession.wrappingUp) {
             foundMine.wrappingUp = true;
             foundMine.wrapUpDeadline = userActiveSession.wrapUpDeadline;
           } else if (Number(foundMine.duration) > 0 && getSessionRemainingSeconds(foundMine) <= 0) {
             foundMine.rushPromptActive = true;
+            foundMine.rushPromptStartedAt = Date.now();
+            foundMine.rushPromptNotified = false;
           } else if (Number(foundMine.duration) === 0 && foundMine.expire_time) {
             const windowSec = foundMine.expire_time - ((foundMine.lastConfirmedAt || foundMine.startedAt) / 1000);
             if (windowSec > 0 && windowSec <= WRAP_UP_SECONDS + 5) {
@@ -1388,8 +1419,33 @@ window.addEventListener('DOMContentLoaded', () => {
           );
         }
       } else if (userActiveSession.rushPromptActive) {
+        const elapsedPromptMs = Date.now() - (userActiveSession.rushPromptStartedAt || Date.now());
+        const remainPromptSec = Math.max(0, Math.ceil((RUSH_PROMPT_TOTAL_SEC * 1000 - elapsedPromptMs) / 1000));
+
         $('sessionTimerSubLabel').textContent = 'Countdown Ended - Awaiting Response';
         $('sessionClock').textContent = '00:00:00';
+        $('rushPromptCountdown').textContent = remainPromptSec + 's';
+
+        // After 5 seconds of no response, fire a device notification reminder
+        if (elapsedPromptMs >= RUSH_PROMPT_NOTIFY_SEC * 1000 && !userActiveSession.rushPromptNotified) {
+          userActiveSession.rushPromptNotified = true;
+          $('rushPromptStatusBadge').className = 'inline-block px-3 py-1 rounded-full bg-rose-100 text-rose-900 text-xs font-black uppercase tracking-wider mb-2 animate-pulse';
+          $('rushPromptStatusBadge').textContent = '🔔 Device Reminder Sent — 5s Left';
+
+          sendDeviceNotification(
+            "VaCanteen Reminder: Are You Still Seated?",
+            "You haven't responded yet! Tap 'I'm Still Seated' or 'I'm Leaving' within 5 seconds or your seat will be automatically vacated.",
+            'vacanteen-rush-prompt-reminder'
+          );
+        }
+
+        // After another 5 seconds (10 seconds total) with still no response, auto-vacate
+        if (elapsedPromptMs >= RUSH_PROMPT_TOTAL_SEC * 1000) {
+          releaseSession(
+            userActiveSession,
+            'No response after device reminder. Your table has been automatically vacated.'
+          );
+        }
       } else if (userActiveSession.wrappingUp) {
         const remain = Math.max(0, Math.ceil((userActiveSession.wrapUpDeadline - Date.now()) / 1000));
         $('sessionTimerSubLabel').textContent = 'Wrapping Up - Auto Release In';
@@ -1430,19 +1486,12 @@ window.addEventListener('DOMContentLoaded', () => {
 
           $('wrapUpCountdown').textContent = WRAP_UP_SECONDS + 's';
           openDialog('wrapUpDialog');
-          playReminderChime();
 
-          if ('Notification' in window && Notification.permission === 'granted') {
-            const notif = new Notification("VaCanteen: Forgot to tap 'I'm Leaving'?", {
-              body: "Your 3-minute timer is over! Please tap 'I'm Leaving' — you have a 30-second wrap-up time before your seat is released.",
-              vibrate: [200, 100, 200],
-              requireInteraction: true
-            });
-            notif.onclick = function () {
-              window.focus();
-              notif.close();
-            };
-          }
+          sendDeviceNotification(
+            "VaCanteen: Forgot to tap 'I'm Leaving'?",
+            "Your 3-minute timer is over! Please tap 'I'm Leaving' — you have a 30-second wrap-up time before your seat is released.",
+            'vacanteen-regular-wrapup'
+          );
         }
       }
     }

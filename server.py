@@ -9,8 +9,8 @@ SR_CODE_PATTERN = re.compile(r'^\d{2}-\d{5}$')
 ACCESS_PASSWORD = 'batstateu'
 
 REGULAR_AUTO_EXPIRE_SECONDS = 4 * 60
-RUSH_PROMPT_BUFFER_SECONDS = 3 * 60  # Holds seats while awaiting "I'm Still Seated" / "I'm Leaving"
-TIMES_UP_GRACE_SECONDS = 30          # 30-second final window after tapping "I'm Still Seated"
+RUSH_PROMPT_BUFFER_SECONDS = 15   # 10s prompt window (5s notify + 5s auto-vacate) + 5s server buffer
+TIMES_UP_GRACE_SECONDS = 30       # 30-second final window after tapping "I'm Still Seated"
 
 
 def is_valid_sr_code(sr_code):
