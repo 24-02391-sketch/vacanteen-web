@@ -625,24 +625,24 @@ button:disabled { cursor:not-allowed; }
   </div>
 </div>
 
-<!-- Regular Hours (Non-Rush Hour) 3-Minute Reminder Popup -->
+<!-- Regular Hours (Non-Rush Hour) Repeating 3-Minute Check-In Popup -->
 <div id="wrapUpDialog" class="backdrop fixed inset-0 z-[60] flex items-center justify-center p-4 bg-maroon-950/80 backdrop-blur-md" aria-hidden="true">
   <div class="dialog-content relative w-full max-w-md bg-white rounded-3xl border-2 border-amber-500 p-8 shadow-modal text-center overflow-hidden">
     <div class="w-16 h-16 rounded-3xl bg-amber-100 text-amber-600 flex items-center justify-center font-black text-3xl mx-auto mb-4 animate-bounce">⏰</div>
     <span class="inline-block px-3 py-1 rounded-full bg-amber-100 text-amber-900 text-xs font-black uppercase tracking-wider mb-2">
-      3-Minute Timer Ended
+      3-Minute Check-In
     </span>
-    <h2 class="text-3xl font-display font-black text-maroon-950">Forgot to Tap “I’m Leaving”?</h2>
+    <h2 class="text-3xl font-display font-black text-maroon-950">Are You Still Seated?</h2>
     <p class="text-sm text-canteen-muted font-bold mt-2 leading-relaxed">
-      Your 3-minute session is over. Please wrap up and tap <strong>“I’m Leaving”</strong> below—you have a <strong>30-second wrap-up time</strong> before your seats are automatically released:
+      You’ve been seated for 3 minutes. Tap <strong>“I’m Still Seated”</strong> to continue your timer, or <strong>“I Already Left”</strong> to vacate your seats (auto-releases in 30s):
     </p>
     <div id="wrapUpCountdown" class="font-mono font-black text-5xl text-amber-600 my-4">30s</div>
     <div class="space-y-3 mt-5">
-      <button id="leaveFromWrapUp" type="button" class="w-full py-4 px-6 rounded-2xl bg-maroon-800 hover:bg-maroon-900 text-white font-black text-base shadow-lg flex items-center justify-center gap-2">
-        <span>👋</span> I’m Leaving Now
+      <button id="stillSeatedRegularBtn" type="button" class="w-full py-4 px-6 rounded-2xl bg-maroon-800 hover:bg-maroon-900 text-white font-black text-base shadow-lg flex items-center justify-center gap-2">
+        <span>🪑</span> I’m Still Seated
       </button>
-      <button id="acknowledgeWrapUp" type="button" class="w-full py-3 px-6 rounded-2xl bg-canteen-paper hover:bg-amber-100 text-maroon-950 font-extrabold text-sm border border-canteen-border">
-        Got It (Wrap Up in 30s)
+      <button id="alreadyLeftRegularBtn" type="button" class="w-full py-3.5 px-6 rounded-2xl bg-slate-900 hover:bg-slate-950 text-white font-black text-sm shadow-md flex items-center justify-center gap-2">
+        <span>👋</span> I Already Left
       </button>
     </div>
   </div>
@@ -651,11 +651,12 @@ button:disabled { cursor:not-allowed; }
 <script>
 const CAPACITY = 6;
 const ACCESS_PASSWORD = 'batstateu';
-const REGULAR_IDLE_PROMPT_SEC = 3 * 60; // 3 minutes (Regular Hours)
-const WRAP_UP_SECONDS = 30;             // 30-second wrap-up window (Regular Hours)
-const RUSH_PROMPT_NOTIFY_SEC = 5;       // 5s of no tap -> send device notification reminder
-const RUSH_PROMPT_TOTAL_SEC = 10;       // +5s (10s total) of still no response -> auto-vacate
-const TIMES_UP_GRACE_SECONDS = 30;      // 30-second Time's Up auto-vacate countdown (Rush Hour)
+const REGULAR_IDLE_PROMPT_SEC = 3 * 60;     // Notify every 3 minutes (Regular Hours)
+const REGULAR_AUTO_EXPIRE_SECONDS = 4 * 60; // Server expiration buffer (3m + 1m)
+const WRAP_UP_SECONDS = 30;                 // 30-second auto-release window if unanswered
+const RUSH_PROMPT_NOTIFY_SEC = 5;           // 5s of no tap -> send device notification reminder
+const RUSH_PROMPT_TOTAL_SEC = 10;           // +5s (10s total) of still no response -> auto-vacate
+const TIMES_UP_GRACE_SECONDS = 30;          // 30-second Time's Up auto-vacate countdown (Rush Hour)
 
 const baseTables = [
   {id:1,x:58.5,y:79.0,occupied:0,occupiedSeats:[]},
@@ -949,7 +950,7 @@ function restoreSeatedSessionModal(sessionObj) {
 
   if (sessionObj.wrappingUp) {
     const remain = Math.max(0, Math.ceil((sessionObj.wrapUpDeadline - Date.now()) / 1000));
-    $('sessionTimerSubLabel').textContent = 'Wrapping Up - Auto Release In';
+    $('sessionTimerSubLabel').textContent = 'Check-In Pending - Auto Release In';
     $('sessionClock').textContent = fmtTime(remain);
   } else if (isRushHour()) {
     $('sessionTimerSubLabel').textContent = 'Rush Hour Time Remaining';
@@ -1491,7 +1492,7 @@ window.addEventListener('DOMContentLoaded', () => {
         }
       } else if (userActiveSession.wrappingUp) {
         const remain = Math.max(0, Math.ceil((userActiveSession.wrapUpDeadline - Date.now()) / 1000));
-        $('sessionTimerSubLabel').textContent = 'Wrapping Up - Auto Release In';
+        $('sessionTimerSubLabel').textContent = 'Check-In Pending - Auto Release In';
         $('sessionClock').textContent = fmtTime(remain);
         $('wrapUpCountdown').textContent = remain + 's';
 
@@ -1499,7 +1500,7 @@ window.addEventListener('DOMContentLoaded', () => {
           stopAlertSound();
           releaseSession(
             userActiveSession,
-            'Your 30-second wrap-up time has ended. Your table has been automatically released.'
+            'No check-in response after 30 seconds. Your table and seats are now vacant.'
           );
         }
       } else if (rush) {
@@ -1533,9 +1534,9 @@ window.addEventListener('DOMContentLoaded', () => {
           startAlertSound();
 
           sendDeviceNotification(
-            "VaCanteen: Forgot to tap 'I'm Leaving'?",
-            "Your 3-minute timer is over! Please tap 'I'm Leaving' — you have a 30-second wrap-up time before your seat is released.",
-            'vacanteen-regular-wrapup'
+            "VaCanteen: Are You Still Seated?",
+            "You've been seated for 3 minutes! Tap 'I'm Still Seated' to continue your timer, or 'I Already Left' to vacate your seats.",
+            'vacanteen-regular-checkin'
           );
         }
       }
@@ -1784,18 +1785,36 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  $('leaveFromWrapUp').addEventListener('click', () => {
-    stopAlertSound();
-    if (userActiveSession) {
-      releaseSession(userActiveSession, 'Thank you! Your table has been released.');
-    }
-  });
-
-  $('acknowledgeWrapUp').addEventListener('click', () => {
+  // Regular Hours 3-Minute Check-In Actions ("I'm Still Seated" vs "I Already Left")
+  $('stillSeatedRegularBtn').addEventListener('click', () => {
     stopAlertSound();
     if (!userActiveSession) return;
+
+    const nowMs = Date.now();
+    userActiveSession.wrappingUp = false;
+    delete userActiveSession.wrapUpDeadline;
+    userActiveSession.lastConfirmedAt = nowMs;
+
+    fetch('/api/keepalive', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id: userActiveSession.id,
+        extra_seconds: REGULAR_AUTO_EXPIRE_SECONDS
+      })
+    }).catch(err => console.error('Keepalive error:', err));
+
     openDialog('sessionDialog');
     restoreSeatedSessionModal(userActiveSession);
+    $('sessionMessage').textContent =
+      'Still seated confirmed! Your timer continues, and we’ll check in again in 3 minutes.';
+  });
+
+  $('alreadyLeftRegularBtn').addEventListener('click', () => {
+    stopAlertSound();
+    if (userActiveSession) {
+      releaseSession(userActiveSession, 'Thank you! Your table and seats are now vacant.');
+    }
   });
 
 });
