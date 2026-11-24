@@ -629,12 +629,12 @@ button:disabled { cursor:not-allowed; }
 <div id="wrapUpDialog" class="backdrop fixed inset-0 z-[60] flex items-center justify-center p-4 bg-maroon-950/80 backdrop-blur-md" aria-hidden="true">
   <div class="dialog-content relative w-full max-w-md bg-white rounded-3xl border-2 border-amber-500 p-8 shadow-modal text-center overflow-hidden">
     <div class="w-16 h-16 rounded-3xl bg-amber-100 text-amber-600 flex items-center justify-center font-black text-3xl mx-auto mb-4 animate-bounce">⏰</div>
-    <span class="inline-block px-3 py-1 rounded-full bg-amber-100 text-amber-900 text-xs font-black uppercase tracking-wider mb-2">
+    <span id="regularCheckInBadge" class="inline-block px-3 py-1 rounded-full bg-amber-100 text-amber-900 text-xs font-black uppercase tracking-wider mb-2">
       3-Minute Check-In
     </span>
     <h2 class="text-3xl font-display font-black text-maroon-950">Are You Still Seated?</h2>
     <p class="text-sm text-canteen-muted font-bold mt-2 leading-relaxed">
-      You’ve been seated for 3 minutes. Tap <strong>“I’m Still Seated”</strong> to continue your timer, or <strong>“I Already Left”</strong> to vacate your seats (auto-releases in 30s):
+      Your timer paused at <strong id="pausedTimeLabel">00:03:00</strong>. Tap <strong>“I’m Still Seated”</strong> to continue your timer, or <strong>“I Already Left”</strong> to vacate your seats (auto-releases in 30s):
     </p>
     <div id="wrapUpCountdown" class="font-mono font-black text-5xl text-amber-600 my-4">30s</div>
     <div class="space-y-3 mt-5">
@@ -651,7 +651,7 @@ button:disabled { cursor:not-allowed; }
 <script>
 const CAPACITY = 6;
 const ACCESS_PASSWORD = 'batstateu';
-const REGULAR_IDLE_PROMPT_SEC = 3 * 60;     // Notify every 3 minutes (Regular Hours)
+const REGULAR_IDLE_PROMPT_SEC = 3 * 60;     // Strictly pauses and notifies every 3 minutes (Regular Hours)
 const REGULAR_AUTO_EXPIRE_SECONDS = 4 * 60; // Server expiration buffer (3m + 1m)
 const WRAP_UP_SECONDS = 30;                 // 30-second auto-release window if unanswered
 const RUSH_PROMPT_NOTIFY_SEC = 5;           // 5s of no tap -> send device notification reminder
@@ -916,6 +916,13 @@ function getSessionRemainingSeconds(s) {
   return Math.max(0, Math.ceil((endMs - Date.now()) / 1000));
 }
 
+function getRegularElapsedSeconds(s) {
+  if (s && typeof s.pausedAtElapsedSec === 'number') {
+    return s.pausedAtElapsedSec;
+  }
+  return Math.max(0, Math.floor((Date.now() - s.startedAt) / 1000));
+}
+
 function restoreSeatedSessionModal(sessionObj) {
   if (!sessionObj || !sessionObj.seated) return;
 
@@ -949,16 +956,14 @@ function restoreSeatedSessionModal(sessionObj) {
   }
 
   if (sessionObj.wrappingUp) {
-    const remain = Math.max(0, Math.ceil((sessionObj.wrapUpDeadline - Date.now()) / 1000));
-    $('sessionTimerSubLabel').textContent = 'Check-In Pending - Auto Release In';
-    $('sessionClock').textContent = fmtTime(remain);
+    $('sessionTimerSubLabel').textContent = 'Timer Paused - Confirm Seating';
+    $('sessionClock').textContent = fmtTime(getRegularElapsedSeconds(sessionObj));
   } else if (isRushHour()) {
     $('sessionTimerSubLabel').textContent = 'Rush Hour Time Remaining';
     $('sessionClock').textContent = fmtTime(getSessionRemainingSeconds(sessionObj));
   } else {
     $('sessionTimerSubLabel').textContent = 'Elapsed Seating Time';
-    const elapsed = Math.max(0, (Date.now() - sessionObj.startedAt) / 1000);
-    $('sessionClock').textContent = fmtTime(elapsed);
+    $('sessionClock').textContent = fmtTime(getRegularElapsedSeconds(sessionObj));
   }
 
   if (
@@ -1091,9 +1096,10 @@ function renderSessions() {
   $('activeCount').textContent = `${sessions.length} ACTIVE`;
 
   const processed = sessions.map(s => {
-    const elapsed = Math.max(0, (Date.now() - s.startedAt) / 1000);
-    const remain = rush ? getSessionRemainingSeconds(s) : 0;
-    return {...s, elapsed, remain};
+    const activeRef = (userActiveSession && s.id === userActiveSession.id) ? userActiveSession : s;
+    const elapsed = getRegularElapsedSeconds(activeRef);
+    const remain = rush ? getSessionRemainingSeconds(activeRef) : 0;
+    return {...activeRef, elapsed, remain};
   });
 
   if (rush) {
@@ -1385,9 +1391,16 @@ function syncFromServer() {
             foundMine.rushPromptActive = true;
             foundMine.rushPromptStartedAt = userActiveSession.rushPromptStartedAt;
             foundMine.rushPromptNotified = userActiveSession.rushPromptNotified;
-          } else if (userActiveSession && userActiveSession.wrappingUp) {
-            foundMine.wrappingUp = true;
-            foundMine.wrapUpDeadline = userActiveSession.wrapUpDeadline;
+          } else if (userActiveSession) {
+            foundMine.startedAt = userActiveSession.startedAt;
+            foundMine.nextCheckInSec = userActiveSession.nextCheckInSec;
+            if (typeof userActiveSession.pausedAtElapsedSec === 'number') {
+              foundMine.pausedAtElapsedSec = userActiveSession.pausedAtElapsedSec;
+            }
+            if (userActiveSession.wrappingUp) {
+              foundMine.wrappingUp = true;
+              foundMine.wrapUpDeadline = userActiveSession.wrapUpDeadline;
+            }
           } else if (Number(foundMine.duration) > 0 && getSessionRemainingSeconds(foundMine) <= 0) {
             foundMine.rushPromptActive = true;
             foundMine.rushPromptStartedAt = Date.now();
@@ -1492,8 +1505,8 @@ window.addEventListener('DOMContentLoaded', () => {
         }
       } else if (userActiveSession.wrappingUp) {
         const remain = Math.max(0, Math.ceil((userActiveSession.wrapUpDeadline - Date.now()) / 1000));
-        $('sessionTimerSubLabel').textContent = 'Check-In Pending - Auto Release In';
-        $('sessionClock').textContent = fmtTime(remain);
+        $('sessionTimerSubLabel').textContent = 'Timer Paused - Confirm Seating';
+        $('sessionClock').textContent = fmtTime(getRegularElapsedSeconds(userActiveSession));
         $('wrapUpCountdown').textContent = remain + 's';
 
         if (remain <= 0) {
@@ -1512,16 +1525,21 @@ window.addEventListener('DOMContentLoaded', () => {
         }
       } else {
         $('sessionTimerSubLabel').textContent = 'Elapsed Seating Time';
-        const elapsed = Math.max(0, (Date.now() - userActiveSession.startedAt) / 1000);
-        $('sessionClock').textContent = fmtTime(elapsed);
+        const elapsed = getRegularElapsedSeconds(userActiveSession);
+        const nextCheckIn = userActiveSession.nextCheckInSec || REGULAR_IDLE_PROMPT_SEC;
 
-        const lastConfirm = userActiveSession.lastConfirmedAt || userActiveSession.startedAt;
-        const sinceConfirmSec = (Date.now() - lastConfirm) / 1000;
-
-        if (sinceConfirmSec >= REGULAR_IDLE_PROMPT_SEC) {
+        if (elapsed >= nextCheckIn) {
           const nowMs = Date.now();
+          const frozenTimeStr = fmtTime(nextCheckIn);
+
+          userActiveSession.pausedAtElapsedSec = nextCheckIn;
           userActiveSession.wrappingUp = true;
           userActiveSession.wrapUpDeadline = nowMs + WRAP_UP_SECONDS * 1000;
+
+          $('sessionTimerSubLabel').textContent = 'Timer Paused - Confirm Seating';
+          $('sessionClock').textContent = frozenTimeStr;
+          $('pausedTimeLabel').textContent = frozenTimeStr;
+          $('regularCheckInBadge').textContent = `${Math.floor(nextCheckIn / 60)}-Minute Check-In`;
 
           fetch('/api/keepalive', {
             method: 'POST',
@@ -1535,9 +1553,11 @@ window.addEventListener('DOMContentLoaded', () => {
 
           sendDeviceNotification(
             "VaCanteen: Are You Still Seated?",
-            "You've been seated for 3 minutes! Tap 'I'm Still Seated' to continue your timer, or 'I Already Left' to vacate your seats.",
+            `Your timer paused at ${frozenTimeStr}. Tap 'I'm Still Seated' to continue, or 'I Already Left' to vacate your seats.`,
             'vacanteen-regular-checkin'
           );
+        } else {
+          $('sessionClock').textContent = fmtTime(elapsed);
         }
       }
     }
@@ -1785,15 +1805,24 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Regular Hours 3-Minute Check-In Actions ("I'm Still Seated" vs "I Already Left")
+  // Regular Hours Strict Repeating 3-Minute Check-In Actions ("I'm Still Seated" vs "I Already Left")
   $('stillSeatedRegularBtn').addEventListener('click', () => {
     stopAlertSound();
     if (!userActiveSession) return;
 
-    const nowMs = Date.now();
+    const resumedFromSec = typeof userActiveSession.pausedAtElapsedSec === 'number'
+      ? userActiveSession.pausedAtElapsedSec
+      : REGULAR_IDLE_PROMPT_SEC;
+    const nextTargetSec = resumedFromSec + REGULAR_IDLE_PROMPT_SEC;
+
     userActiveSession.wrappingUp = false;
     delete userActiveSession.wrapUpDeadline;
-    userActiveSession.lastConfirmedAt = nowMs;
+    delete userActiveSession.pausedAtElapsedSec;
+
+    // Anchor startedAt so the next tick continues cleanly from 00:03:01 -> 00:06:00, etc.
+    userActiveSession.startedAt = Date.now() - resumedFromSec * 1000;
+    userActiveSession.nextCheckInSec = nextTargetSec;
+    userActiveSession.lastConfirmedAt = Date.now();
 
     fetch('/api/keepalive', {
       method: 'POST',
@@ -1807,7 +1836,7 @@ window.addEventListener('DOMContentLoaded', () => {
     openDialog('sessionDialog');
     restoreSeatedSessionModal(userActiveSession);
     $('sessionMessage').textContent =
-      'Still seated confirmed! Your timer continues, and we’ll check in again in 3 minutes.';
+      `Timer resumed! We’ll check in again at ${fmtTime(nextTargetSec)}.`;
   });
 
   $('alreadyLeftRegularBtn').addEventListener('click', () => {
