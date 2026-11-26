@@ -610,7 +610,7 @@ button:disabled { cursor:not-allowed; }
   </div>
 </div>
 
-<!-- 30-Second Time's Up Auto-Vacate Popup (Maroon/Red Palette) -->
+<!-- 30-Second Time's Up Auto-Vacate Popup (Maroon/Red Palette, Silent - No Notification Sound) -->
 <div id="timesUpDialog" class="backdrop fixed inset-0 z-[60] flex items-center justify-center p-4 bg-maroon-950/80 backdrop-blur-md" aria-hidden="true">
   <div class="dialog-content relative w-full max-w-md bg-white rounded-3xl border-2 border-maroon-800 p-8 shadow-modal text-center overflow-hidden">
     <div class="w-16 h-16 rounded-3xl bg-maroon-100 text-maroon-800 flex items-center justify-center font-black text-3xl mx-auto mb-4 animate-bounce">⌛</div>
@@ -700,6 +700,7 @@ let pendingSession = null;
 let userActiveSession = null;
 let activeFilter = 'all';
 let hasOccupancyActivity = false;
+let noticeTimeout = null;
 
 const $ = id => document.getElementById(id);
 const pad = n => String(n).padStart(2,'0');
@@ -725,25 +726,31 @@ function playReminderChime() {
   }
 }
 
-function sendDeviceNotification(title, body, tag = 'vacanteen-reminder') {
-  playReminderChime();
-  if ('vibrate' in navigator) {
-    try {
-      navigator.vibrate([300, 150, 300, 150, 300]);
-    } catch (e) {}
+function sendDeviceNotification(title, body, tag = 'vacanteen-reminder', silent = false) {
+  if (!silent) {
+    playReminderChime();
+    if ('vibrate' in navigator) {
+      try {
+        navigator.vibrate([300, 150, 300, 150, 300]);
+      } catch (e) {}
+    }
   }
 
   if (!('Notification' in window)) return;
 
   const showNotif = () => {
     try {
-      const notif = new Notification(title, {
+      const options = {
         body,
         tag,
         renotify: true,
-        vibrate: [300, 150, 300],
+        silent: silent,
         requireInteraction: true
-      });
+      };
+      if (!silent) {
+        options.vibrate = [300, 150, 300];
+      }
+      const notif = new Notification(title, options);
       notif.onclick = function () {
         window.focus();
         notif.close();
@@ -812,6 +819,12 @@ function setPill(el,s) {
 function showNotice(msg) {
   $('systemNoticeText').textContent = msg;
   $('systemNotice').classList.remove('hidden');
+
+  if (noticeTimeout) clearTimeout(noticeTimeout);
+  noticeTimeout = setTimeout(() => {
+    $('systemNotice').classList.add('hidden');
+    noticeTimeout = null;
+  }, 30000);
 }
 
 function resetCheckinForm() {
@@ -1216,11 +1229,12 @@ function triggerRushPrompt() {
   $('sessionClock').textContent = '00:00:00';
 }
 
-// Step 2 if user clicks "I'm Still Seated": 30-second Time's Up popup -> auto-vacate
+// Step 2 if user clicks "I'm Still Seated": 30-second Time's Up popup -> auto-vacate (NO notification sound)
 function triggerTimesUp() {
   if (!userActiveSession) return;
 
   userActiveSession.rushPromptActive = false;
+  stopAlertSound();
 
   if (!userActiveSession.timesUp) {
     userActiveSession.timesUp = true;
@@ -1238,11 +1252,11 @@ function triggerTimesUp() {
     }).catch(err => console.error('Keepalive error:', err));
 
     openDialog('timesUpDialog');
-    startAlertSound();
     sendDeviceNotification(
       "VaCanteen: Time's Up!",
       "Your rush hour dining window has ended. Please wrap up — your table will automatically vacate in 30 seconds.",
-      'vacanteen-times-up'
+      'vacanteen-times-up',
+      true
     );
   } else if (!$('timesUpDialog').classList.contains('open')) {
     openDialog('timesUpDialog');
@@ -1443,6 +1457,10 @@ window.addEventListener('DOMContentLoaded', () => {
   setInterval(syncFromServer, 5000);
 
   $('closeNoticeBtn').addEventListener('click', () => {
+    if (noticeTimeout) {
+      clearTimeout(noticeTimeout);
+      noticeTimeout = null;
+    }
     $('systemNotice').classList.add('hidden');
   });
 
