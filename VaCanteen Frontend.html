@@ -929,13 +929,16 @@ function getSessionRemainingSeconds(s) {
   return Math.max(0, Math.ceil((endMs - Date.now()) / 1000));
 }
 
-// Computes Regular Hours elapsed seconds, freezing the clock while the 3-minute check-up modal is open
+// Regular Hours elapsed seconds:
+// - While paused at check-up, freezes cleanly on the exact check-up mark (e.g. 00:03:00, 00:06:00)
+// - When "I'm Still Here" is clicked, resumes cleanly from +1s (e.g. 00:03:01, 00:06:01)
 function getRegularElapsedSeconds(s) {
-  const pausedBefore = s.totalPausedMs || 0;
-  const activePause = (s.wrappingUp && s.wrapUpStartedAt)
-    ? Math.max(0, Date.now() - s.wrapUpStartedAt)
-    : 0;
-  return Math.max(0, (Date.now() - s.startedAt - pausedBefore - activePause) / 1000);
+  if (s.wrappingUp && typeof s.frozenElapsedSec === 'number') {
+    return s.frozenElapsedSec;
+  }
+  const baseSec = s.resumedBaseSec || 0;
+  const resumeAt = s.resumedAtMs || s.startedAt;
+  return Math.max(0, baseSec + Math.floor((Date.now() - resumeAt) / 1000));
 }
 
 function restoreSeatedSessionModal(sessionObj) {
@@ -1403,8 +1406,14 @@ function syncFromServer() {
         const foundMine = sessions.find(s => s.id === savedMyId);
         if (foundMine) {
           if (userActiveSession) {
-            foundMine.totalPausedMs = userActiveSession.totalPausedMs || 0;
-            foundMine.activeSeatedMsAnchor = userActiveSession.activeSeatedMsAnchor || 0;
+            foundMine.checkCycle = userActiveSession.checkCycle || 1;
+            foundMine.resumedBaseSec = userActiveSession.resumedBaseSec || 0;
+            foundMine.resumedAtMs = userActiveSession.resumedAtMs || foundMine.startedAt;
+            foundMine.frozenElapsedSec = userActiveSession.frozenElapsedSec;
+          } else {
+            foundMine.checkCycle = 1;
+            foundMine.resumedBaseSec = 0;
+            foundMine.resumedAtMs = foundMine.startedAt;
           }
 
           if (userActiveSession && userActiveSession.timesUp) {
@@ -1419,7 +1428,6 @@ function syncFromServer() {
             foundMine.rushPromptNotified = userActiveSession.rushPromptNotified;
           } else if (userActiveSession && userActiveSession.wrappingUp) {
             foundMine.wrappingUp = true;
-            foundMine.wrapUpStartedAt = userActiveSession.wrapUpStartedAt;
             foundMine.wrapUpDeadline = userActiveSession.wrapUpDeadline;
           } else if (Number(foundMine.duration) > 0 && getSessionRemainingSeconds(foundMine) <= 0) {
             foundMine.rushPromptActive = true;
@@ -1428,8 +1436,9 @@ function syncFromServer() {
           } else if (Number(foundMine.duration) === 0 && foundMine.expire_time) {
             const windowSec = foundMine.expire_time - ((foundMine.lastConfirmedAt || foundMine.startedAt) / 1000);
             if (windowSec > 0 && windowSec <= WRAP_UP_SECONDS + 5) {
+              const targetSec = (foundMine.checkCycle || 1) * REGULAR_IDLE_PROMPT_SEC;
               foundMine.wrappingUp = true;
-              foundMine.wrapUpStartedAt = Date.now();
+              foundMine.frozenElapsedSec = targetSec;
               foundMine.wrapUpDeadline = foundMine.expire_time * 1000;
             }
           }
@@ -1508,7 +1517,6 @@ window.addEventListener('DOMContentLoaded', () => {
         $('sessionClock').textContent = '00:00:00';
         $('rushPromptCountdown').textContent = remainPromptSec + 's';
 
-        // After 5 seconds of no response, update badge and send follow-up device reminder
         if (elapsedPromptMs >= RUSH_PROMPT_NOTIFY_SEC * 1000 && !userActiveSession.rushPromptNotified) {
           userActiveSession.rushPromptNotified = true;
           $('rushPromptStatusBadge').className = 'inline-block px-3 py-1 rounded-full bg-maroon-800 text-white text-xs font-black uppercase tracking-wider mb-2 animate-pulse';
@@ -1521,7 +1529,6 @@ window.addEventListener('DOMContentLoaded', () => {
           );
         }
 
-        // After another 5 seconds (10 seconds total) with still no response, auto-vacate
         if (elapsedPromptMs >= RUSH_PROMPT_TOTAL_SEC * 1000) {
           stopAlertSound();
           releaseSession(
@@ -1550,22 +1557,18 @@ window.addEventListener('DOMContentLoaded', () => {
           triggerRushPrompt();
         }
       } else {
-        $('sessionTimerSubLabel').textContent = 'Elapsed Seating Time';
-        const elapsed = getRegularElapsedSeconds(userActiveSession);
-        $('sessionClock').textContent = fmtTime(elapsed);
+        const cycle = userActiveSession.checkCycle || 1;
+        const targetSec = cycle * REGULAR_IDLE_PROMPT_SEC; // 180s (3:00), 360s (6:00), 540s (9:00)...
+        const elapsedSec = getRegularElapsedSeconds(userActiveSession);
 
-        const activeAnchorMs = userActiveSession.activeSeatedMsAnchor || 0;
-        const activeSinceCheckSec = (elapsed * 1000 - activeAnchorMs) / 1000;
-
-        if (activeSinceCheckSec >= REGULAR_IDLE_PROMPT_SEC) {
+        if (elapsedSec >= targetSec) {
           const nowMs = Date.now();
           userActiveSession.wrappingUp = true;
-          userActiveSession.wrapUpStartedAt = nowMs;
+          userActiveSession.frozenElapsedSec = targetSec; // Locks display on exact 00:03:00, 00:06:00, etc.
           userActiveSession.wrapUpDeadline = nowMs + WRAP_UP_SECONDS * 1000;
 
-          // Freeze main clock right at the 3-minute check-up mark
           $('sessionTimerSubLabel').textContent = 'Check-Up Paused';
-          $('sessionClock').textContent = fmtTime(getRegularElapsedSeconds(userActiveSession));
+          $('sessionClock').textContent = fmtTime(targetSec);
 
           fetch('/api/keepalive', {
             method: 'POST',
@@ -1579,9 +1582,12 @@ window.addEventListener('DOMContentLoaded', () => {
 
           sendDeviceNotification(
             "VaCanteen: Are You Still Seated?",
-            "You've been seated for 3 minutes. Tap 'I'm Still Here' to continue your timer or 'I Already Left' within 30 seconds.",
+            `You've been seated for ${cycle * 3} minutes. Tap 'I'm Still Here' to continue your timer or 'I Already Left' within 30 seconds.`,
             'vacanteen-regular-wrapup'
           );
+        } else {
+          $('sessionTimerSubLabel').textContent = 'Elapsed Seating Time';
+          $('sessionClock').textContent = fmtTime(elapsedSec);
         }
       }
     }
@@ -1738,8 +1744,9 @@ window.addEventListener('DOMContentLoaded', () => {
       selectedSeatNumbers: chosenSeatsSorted,
       startedAt: nowMs,
       lastConfirmedAt: nowMs,
-      totalPausedMs: 0,
-      activeSeatedMsAnchor: 0,
+      checkCycle: 1,
+      resumedBaseSec: 0,
+      resumedAtMs: nowMs,
       duration: rush ? duration : 0,
       seated: false
     };
@@ -1771,8 +1778,9 @@ window.addEventListener('DOMContentLoaded', () => {
     pendingSession.seated = true;
     pendingSession.startedAt = nowMs;
     pendingSession.lastConfirmedAt = nowMs;
-    pendingSession.totalPausedMs = 0;
-    pendingSession.activeSeatedMsAnchor = 0;
+    pendingSession.checkCycle = 1;
+    pendingSession.resumedBaseSec = 0;
+    pendingSession.resumedAtMs = nowMs;
 
     userActiveSession = pendingSession;
     localStorage.setItem('vacanteen_my_session', pendingSession.id);
@@ -1841,18 +1849,19 @@ window.addEventListener('DOMContentLoaded', () => {
     if (!userActiveSession) return;
 
     const nowMs = Date.now();
-    if (userActiveSession.wrapUpStartedAt) {
-      userActiveSession.totalPausedMs = (userActiveSession.totalPausedMs || 0) + (nowMs - userActiveSession.wrapUpStartedAt);
-    }
+    const completedCycle = userActiveSession.checkCycle || 1;
+    const pausedSec = typeof userActiveSession.frozenElapsedSec === 'number'
+      ? userActiveSession.frozenElapsedSec
+      : (completedCycle * REGULAR_IDLE_PROMPT_SEC);
+
+    // Resume at +1s (e.g., 00:03:00 -> 00:03:01, 00:06:00 -> 00:06:01) and schedule next check-up +3 mins later
     userActiveSession.wrappingUp = false;
-    userActiveSession.wrapUpStartedAt = null;
+    userActiveSession.frozenElapsedSec = null;
     userActiveSession.wrapUpDeadline = null;
     userActiveSession.lastConfirmedAt = nowMs;
-
-    // Anchor next 3-minute check-up to current active elapsed time, and advance display +1s (e.g., 00:03:00 -> 00:03:01)
-    const activeElapsedMs = getRegularElapsedSeconds(userActiveSession) * 1000;
-    userActiveSession.activeSeatedMsAnchor = activeElapsedMs;
-    userActiveSession.totalPausedMs = Math.max(0, (userActiveSession.totalPausedMs || 0) - 1000);
+    userActiveSession.resumedBaseSec = pausedSec + 1;
+    userActiveSession.resumedAtMs = nowMs;
+    userActiveSession.checkCycle = completedCycle + 1;
 
     fetch('/api/keepalive', {
       method: 'POST',
