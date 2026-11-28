@@ -503,14 +503,13 @@ button:disabled { cursor:not-allowed; }
       <div id="durationField" hidden>
         <label for="duration" class="block text-xs font-extrabold text-canteen-ink mb-1.5">Rush Hour Stay Duration</label>
         <select id="duration" class="w-full h-12 px-4 rounded-xl border border-canteen-border text-sm font-bold outline-none bg-white">
-          <option value="1">1 minute (for testing only)</option>
-          <option value="10">10 Minutes</option>
-          <option value="15" selected>15 Minutes</option>
-          <option value="20">20 Minutes</option>
-          <option value="25">25 Minutes</option>
-          <option value="30">30 Minutes</option>
+          <option value="4">4 Minutes</option>
+          <option value="5">5 Minutes</option>
+          <option value="6" selected>6 Minutes</option>
+          <option value="7">7 Minutes</option>
+          <option value="8">8 Minutes</option>
         </select>
-        <p class="text-xs text-canteen-muted mt-1 font-medium">Rush hour enforced session limit: 10-30 mins.</p>
+        <p class="text-xs text-canteen-muted mt-1 font-medium">Rush hour enforced session limit: 4 to 8 mins.</p>
       </div>
     </div>
     <button id="continueCheckin" type="button" class="w-full py-4 px-5 rounded-2xl bg-maroon-800 hover:bg-maroon-900 text-white font-extrabold text-base shadow-lg">Continue To Seat Selection</button>
@@ -549,7 +548,7 @@ button:disabled { cursor:not-allowed; }
             </div>
             <div id="durationSummary" class="flex justify-between text-canteen-ink" hidden>
               <span class="text-canteen-muted">Session Limit</span>
-              <b id="durationSummaryValue" class="text-maroon-900 text-sm">15 minutes</b>
+              <b id="durationSummaryValue" class="text-maroon-900 text-sm">6 minutes</b>
             </div>
           </div>
         </div>
@@ -587,65 +586,99 @@ button:disabled { cursor:not-allowed; }
   </div>
 </div>
 
-<!-- Rush Hour Countdown 0 Prompt: Maroon/Red Palette + Alert Sound & Device Notification -->
+<!-- Rush Hour Countdown 0 Prompt: 5s -> Device Notification Reminder -> +5s -> Auto-Vacate -->
 <div id="rushPromptDialog" class="backdrop fixed inset-0 z-[60] flex items-center justify-center p-4 bg-maroon-950/80 backdrop-blur-md" aria-hidden="true">
-  <div class="dialog-content relative w-full max-w-md bg-white rounded-3xl border-2 border-maroon-800 p-8 shadow-modal text-center overflow-hidden">
-    <div class="w-16 h-16 rounded-3xl bg-maroon-100 text-maroon-800 flex items-center justify-center font-black text-3xl mx-auto mb-4 animate-bounce">⏰</div>
-    <span id="rushPromptStatusBadge" class="inline-block px-3 py-1 rounded-full bg-maroon-100 text-maroon-900 text-xs font-black uppercase tracking-wider mb-2">
+  <div class="dialog-content relative w-full max-w-md bg-white rounded-3xl border-2 border-amber-500 p-8 shadow-modal text-center overflow-hidden">
+    <div class="w-16 h-16 rounded-3xl bg-amber-100 text-amber-600 flex items-center justify-center font-black text-3xl mx-auto mb-4 animate-bounce">⏰</div>
+    <span id="rushPromptStatusBadge" class="inline-block px-3 py-1 rounded-full bg-amber-100 text-amber-900 text-xs font-black uppercase tracking-wider mb-2">
       Rush Hour Countdown Ended
     </span>
     <h2 class="text-3xl font-display font-black text-maroon-950">Are You Still Seated?</h2>
     <p class="text-sm text-canteen-muted font-bold mt-2 leading-relaxed">
       Your rush hour countdown reached <strong>00:00:00</strong>. Tap <strong>“I’m Still Seated”</strong> or <strong>“I’m Leaving”</strong> before the timer runs out:
     </p>
-    <div id="rushPromptCountdown" class="font-mono font-black text-5xl text-maroon-800 my-4">10s</div>
+    <div id="rushPromptCountdown" class="font-mono font-black text-5xl text-amber-600 my-4">10s</div>
     <div class="space-y-3 mt-4">
       <button id="stillSeatedRushBtn" type="button" class="w-full py-4 px-6 rounded-2xl bg-maroon-800 hover:bg-maroon-900 text-white font-black text-base shadow-lg">
         I’m Still Seated
       </button>
-      <button id="leaveFromRushPromptBtn" type="button" class="w-full py-4 px-6 rounded-2xl bg-canteen-paper hover:bg-maroon-50 text-maroon-950 border border-canteen-border font-black text-base shadow-sm flex items-center justify-center gap-2">
+      <button id="leaveFromRushPromptBtn" type="button" class="w-full py-4 px-6 rounded-2xl bg-slate-900 hover:bg-slate-950 text-white font-black text-base shadow-lg flex items-center justify-center gap-2">
         <span>👋</span> I’m Leaving
       </button>
     </div>
   </div>
 </div>
 
-<!-- 30-Second Time's Up Auto-Vacate Popup (Maroon/Red Palette, Silent - No Notification Sound) -->
+<!-- 30-Second Time's Up Auto-Vacate Popup (shown after clicking "I'm Still Seated") -->
 <div id="timesUpDialog" class="backdrop fixed inset-0 z-[60] flex items-center justify-center p-4 bg-maroon-950/80 backdrop-blur-md" aria-hidden="true">
-  <div class="dialog-content relative w-full max-w-md bg-white rounded-3xl border-2 border-maroon-800 p-8 shadow-modal text-center overflow-hidden">
-    <div class="w-16 h-16 rounded-3xl bg-maroon-100 text-maroon-800 flex items-center justify-center font-black text-3xl mx-auto mb-4 animate-bounce">⌛</div>
-    <span class="inline-block px-3 py-1 rounded-full bg-maroon-100 text-maroon-900 text-xs font-black uppercase tracking-wider mb-2">
+  <div class="dialog-content relative w-full max-w-md bg-white rounded-3xl border-2 border-rose-500 p-8 shadow-modal text-center overflow-hidden">
+    <div class="w-16 h-16 rounded-3xl bg-rose-100 text-rose-600 flex items-center justify-center font-black text-3xl mx-auto mb-4 animate-bounce">⌛</div>
+    <span class="inline-block px-3 py-1 rounded-full bg-rose-100 text-rose-900 text-xs font-black uppercase tracking-wider mb-2">
       Rush Hour Limit Reached
     </span>
     <h2 class="text-3xl font-display font-black text-maroon-950">Time’s Up!</h2>
     <p class="text-sm text-canteen-muted font-bold mt-2 leading-relaxed">
-      Your rush hour dining window has concluded. Please wrap up and vacate the table—your seats will automatically be released in:
+      Your rush hour dining window has concluded. Please vacate the table—your seats will automatically be released in:
     </p>
-    <div id="timesUpCountdown" class="font-mono font-black text-5xl text-maroon-800 my-4">30s</div>
-    <button id="dismissTimesUp" type="button" class="w-full py-4 px-6 rounded-2xl bg-maroon-800 hover:bg-maroon-900 text-white font-black text-base shadow-lg">Vacate Table & Finish</button>
+    <div id="timesUpCountdown" class="font-mono font-black text-5xl text-rose-600 my-4">30s</div>
+    <button id="dismissTimesUp" type="button" class="w-full py-4 px-6 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white font-black text-base shadow-lg">Vacate Table & Finish</button>
   </div>
 </div>
 
-<!-- Regular Hours (Non-Rush Hour) 3-Minute Check-Up Popup -->
+<!-- Regular Hours (Non-Rush Hour) 3-Minute Reminder Popup -->
 <div id="wrapUpDialog" class="backdrop fixed inset-0 z-[60] flex items-center justify-center p-4 bg-maroon-950/80 backdrop-blur-md" aria-hidden="true">
   <div class="dialog-content relative w-full max-w-md bg-white rounded-3xl border-2 border-amber-500 p-8 shadow-modal text-center overflow-hidden">
     <div class="w-16 h-16 rounded-3xl bg-amber-100 text-amber-600 flex items-center justify-center font-black text-3xl mx-auto mb-4 animate-bounce">⏰</div>
     <span class="inline-block px-3 py-1 rounded-full bg-amber-100 text-amber-900 text-xs font-black uppercase tracking-wider mb-2">
-      3-Minute Check-Up
+      3-Minute Timer Ended
     </span>
-    <h2 class="text-3xl font-display font-black text-maroon-950">Are You Still Seated?</h2>
+    <h2 class="text-3xl font-display font-black text-maroon-950">Forgot to Tap “I’m Leaving”?</h2>
     <p class="text-sm text-canteen-muted font-bold mt-2 leading-relaxed">
-      You’ve been seated for 3 minutes. Tap <strong>“I’m Still Here”</strong> to keep your table and continue the timer, or <strong>“I Already Left”</strong> before your seats automatically release in:
+      Your 3-minute session is over. Please wrap up and tap <strong>“I’m Leaving”</strong> below—you have a <strong>30-second wrap-up time</strong> before your seats are automatically released:
     </p>
     <div id="wrapUpCountdown" class="font-mono font-black text-5xl text-amber-600 my-4">30s</div>
     <div class="space-y-3 mt-5">
-      <button id="stillHereRegularBtn" type="button" class="w-full py-4 px-6 rounded-2xl bg-maroon-800 hover:bg-maroon-900 text-white font-black text-base shadow-lg">
-        I’m Still Here
+      <button id="leaveFromWrapUp" type="button" class="w-full py-4 px-6 rounded-2xl bg-maroon-800 hover:bg-maroon-900 text-white font-black text-base shadow-lg flex items-center justify-center gap-2">
+        <span>👋</span> I’m Leaving Now
       </button>
-      <button id="alreadyLeftRegularBtn" type="button" class="w-full py-3.5 px-6 rounded-2xl bg-canteen-paper hover:bg-amber-100 text-maroon-950 font-extrabold text-sm border border-canteen-border flex items-center justify-center gap-2">
-        <span>👋</span> I Already Left
+      <button id="acknowledgeWrapUp" type="button" class="w-full py-3 px-6 rounded-2xl bg-canteen-paper hover:bg-amber-100 text-maroon-950 font-extrabold text-sm border border-canteen-border">
+        Got It (Wrap Up in 30s)
       </button>
     </div>
+  </div>
+</div>
+
+<!-- Post-Session Thank You & 5-Star Feedback Modal -->
+<div id="feedbackDialog" class="backdrop fixed inset-0 z-[70] flex items-center justify-center p-4 bg-maroon-950/75 backdrop-blur-md" aria-hidden="true">
+  <div class="dialog-content relative w-full max-w-md bg-white rounded-3xl border border-canteen-border p-8 shadow-modal text-center overflow-hidden">
+    <button type="button" id="closeFeedbackBtn" class="absolute top-4 right-4 w-9 h-9 rounded-full bg-canteen-paper text-canteen-muted hover:text-maroon-900 flex items-center justify-center font-black text-xl" aria-label="Close">×</button>
+    <div class="w-16 h-16 rounded-3xl bg-maroon-100 text-maroon-800 flex items-center justify-center font-black text-3xl mx-auto mb-4">🍽️</div>
+    <span class="inline-block px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-black uppercase tracking-wider mb-2">
+      Session Completed
+    </span>
+    <h2 class="text-3xl font-display font-black text-maroon-950 leading-tight">Thank You for Using VaCanteen!</h2>
+    <p class="text-sm text-canteen-muted font-medium mt-2">
+      How was your canteen seating experience? Tap a star to rate us.
+    </p>
+
+    <div id="starRatingGroup" class="flex items-center justify-center gap-2 my-6" role="radiogroup" aria-label="5 Star Rating">
+      <button type="button" data-star="1" aria-label="1 Star" class="feedback-star text-4xl sm:text-5xl text-slate-300 hover:scale-110 transition-transform focus:outline-none">★</button>
+      <button type="button" data-star="2" aria-label="2 Stars" class="feedback-star text-4xl sm:text-5xl text-slate-300 hover:scale-110 transition-transform focus:outline-none">★</button>
+      <button type="button" data-star="3" aria-label="3 Stars" class="feedback-star text-4xl sm:text-5xl text-slate-300 hover:scale-110 transition-transform focus:outline-none">★</button>
+      <button type="button" data-star="4" aria-label="4 Stars" class="feedback-star text-4xl sm:text-5xl text-slate-300 hover:scale-110 transition-transform focus:outline-none">★</button>
+      <button type="button" data-star="5" aria-label="5 Stars" class="feedback-star text-4xl sm:text-5xl text-slate-300 hover:scale-110 transition-transform focus:outline-none">★</button>
+    </div>
+
+    <div id="feedbackRatingLabel" class="text-xs font-extrabold text-maroon-800 min-h-[20px] mb-5">
+      Select a rating from 1 to 5 stars
+    </div>
+
+    <button id="submitFeedbackBtn" type="button" disabled class="w-full py-4 px-6 rounded-2xl bg-maroon-800 hover:bg-maroon-900 text-white font-black text-base shadow-lg disabled:opacity-40 disabled:cursor-not-allowed">
+      Submit Feedback
+    </button>
+    <button id="skipFeedbackBtn" type="button" class="w-full mt-3 py-2 text-xs font-bold text-canteen-muted hover:text-canteen-ink">
+      Skip
+    </button>
   </div>
 </div>
 
@@ -653,9 +686,9 @@ button:disabled { cursor:not-allowed; }
 const CAPACITY = 6;
 const ACCESS_PASSWORD = 'batstateu';
 const REGULAR_IDLE_PROMPT_SEC = 3 * 60; // 3 minutes (Regular Hours)
-const WRAP_UP_SECONDS = 30;             // 30-second check-up window (Regular Hours)
-const RUSH_PROMPT_NOTIFY_SEC = 5;       // 5s follow-up reminder if still no tap
-const RUSH_PROMPT_TOTAL_SEC = 10;       // 10s total of still no response -> auto-vacate
+const WRAP_UP_SECONDS = 30;             // 30-second wrap-up window (Regular Hours)
+const RUSH_PROMPT_NOTIFY_SEC = 5;       // 5s of no tap -> send device notification reminder
+const RUSH_PROMPT_TOTAL_SEC = 10;       // +5s (10s total) of still no response -> auto-vacate
 const TIMES_UP_GRACE_SECONDS = 30;      // 30-second Time's Up auto-vacate countdown (Rush Hour)
 
 const baseTables = [
@@ -700,7 +733,7 @@ let pendingSession = null;
 let userActiveSession = null;
 let activeFilter = 'all';
 let hasOccupancyActivity = false;
-let noticeTimeout = null;
+let selectedFeedbackStars = 0;
 
 const $ = id => document.getElementById(id);
 const pad = n => String(n).padStart(2,'0');
@@ -726,31 +759,25 @@ function playReminderChime() {
   }
 }
 
-function sendDeviceNotification(title, body, tag = 'vacanteen-reminder', silent = false) {
-  if (!silent) {
-    playReminderChime();
-    if ('vibrate' in navigator) {
-      try {
-        navigator.vibrate([300, 150, 300, 150, 300]);
-      } catch (e) {}
-    }
+function sendDeviceNotification(title, body, tag = 'vacanteen-reminder') {
+  playReminderChime();
+  if ('vibrate' in navigator) {
+    try {
+      navigator.vibrate([300, 150, 300, 150, 300]);
+    } catch (e) {}
   }
 
   if (!('Notification' in window)) return;
 
   const showNotif = () => {
     try {
-      const options = {
+      const notif = new Notification(title, {
         body,
         tag,
         renotify: true,
-        silent: silent,
+        vibrate: [300, 150, 300],
         requireInteraction: true
-      };
-      if (!silent) {
-        options.vibrate = [300, 150, 300];
-      }
-      const notif = new Notification(title, options);
+      });
       notif.onclick = function () {
         window.focus();
         notif.close();
@@ -817,12 +844,6 @@ function setPill(el,s) {
 function showNotice(msg) {
   $('systemNoticeText').textContent = msg;
   $('systemNotice').classList.remove('hidden');
-
-  if (noticeTimeout) clearTimeout(noticeTimeout);
-  noticeTimeout = setTimeout(() => {
-    $('systemNotice').classList.add('hidden');
-    noticeTimeout = null;
-  }, 30000);
 }
 
 function resetCheckinForm() {
@@ -836,7 +857,7 @@ function resetCheckinForm() {
   }
   $('formError').textContent = '';
   $('partySize').value = '2';
-  $('duration').value = '15';
+  $('duration').value = '6';
   selectedSeats.clear();
 }
 
@@ -865,6 +886,35 @@ function closeDialogs(force = false) {
   if (!userActiveSession) {
     resetCheckinForm();
   }
+}
+
+const FEEDBACK_LABELS = {
+  1: '1 Star — Needs Improvement',
+  2: '2 Stars — Fair',
+  3: '3 Stars — Good',
+  4: '4 Stars — Very Good',
+  5: '5 Stars — Excellent!'
+};
+
+function updateStarDisplay(activeStars) {
+  document.querySelectorAll('.feedback-star').forEach(btn => {
+    const val = Number(btn.dataset.star);
+    if (val <= activeStars) {
+      btn.classList.remove('text-slate-300');
+      btn.classList.add('text-amber-400');
+    } else {
+      btn.classList.remove('text-amber-400');
+      btn.classList.add('text-slate-300');
+    }
+  });
+}
+
+function openFeedbackDialog() {
+  selectedFeedbackStars = 0;
+  updateStarDisplay(0);
+  $('feedbackRatingLabel').textContent = 'Select a rating from 1 to 5 stars';
+  $('submitFeedbackBtn').disabled = true;
+  openDialog('feedbackDialog');
 }
 
 let alertAudioContext = null;
@@ -920,25 +970,13 @@ function formatSeatList(seatNums) {
 }
 
 function getEffectiveRushDuration(s) {
-  return (s && Number(s.duration) > 0) ? Number(s.duration) : 15;
+  return (s && Number(s.duration) > 0) ? Number(s.duration) : 6;
 }
 
 function getSessionRemainingSeconds(s) {
   const durMin = getEffectiveRushDuration(s);
   const endMs = s.startedAt + durMin * 60 * 1000;
   return Math.max(0, Math.ceil((endMs - Date.now()) / 1000));
-}
-
-// Regular Hours elapsed seconds:
-// - While paused at check-up, freezes cleanly on the exact check-up mark (e.g. 00:03:00, 00:06:00)
-// - When "I'm Still Here" is clicked, resumes cleanly from +1s (e.g. 00:03:01, 00:06:01)
-function getRegularElapsedSeconds(s) {
-  if (s.wrappingUp && typeof s.frozenElapsedSec === 'number') {
-    return s.frozenElapsedSec;
-  }
-  const baseSec = s.resumedBaseSec || 0;
-  const resumeAt = s.resumedAtMs || s.startedAt;
-  return Math.max(0, baseSec + Math.floor((Date.now() - resumeAt) / 1000));
 }
 
 function restoreSeatedSessionModal(sessionObj) {
@@ -974,14 +1012,16 @@ function restoreSeatedSessionModal(sessionObj) {
   }
 
   if (sessionObj.wrappingUp) {
-    $('sessionTimerSubLabel').textContent = 'Check-Up Paused';
-    $('sessionClock').textContent = fmtTime(getRegularElapsedSeconds(sessionObj));
+    const remain = Math.max(0, Math.ceil((sessionObj.wrapUpDeadline - Date.now()) / 1000));
+    $('sessionTimerSubLabel').textContent = 'Wrapping Up - Auto Release In';
+    $('sessionClock').textContent = fmtTime(remain);
   } else if (isRushHour()) {
     $('sessionTimerSubLabel').textContent = 'Rush Hour Time Remaining';
     $('sessionClock').textContent = fmtTime(getSessionRemainingSeconds(sessionObj));
   } else {
     $('sessionTimerSubLabel').textContent = 'Elapsed Seating Time';
-    $('sessionClock').textContent = fmtTime(getRegularElapsedSeconds(sessionObj));
+    const elapsed = Math.max(0, (Date.now() - sessionObj.startedAt) / 1000);
+    $('sessionClock').textContent = fmtTime(elapsed);
   }
 
   if (
@@ -1114,10 +1154,8 @@ function renderSessions() {
   $('activeCount').textContent = `${sessions.length} ACTIVE`;
 
   const processed = sessions.map(s => {
-    const isMySession = userActiveSession && s.id === userActiveSession.id;
-    const refSession = isMySession ? userActiveSession : s;
-    const elapsed = getRegularElapsedSeconds(refSession);
-    const remain = rush ? getSessionRemainingSeconds(refSession) : 0;
+    const elapsed = Math.max(0, (Date.now() - s.startedAt) / 1000);
+    const remain = rush ? getSessionRemainingSeconds(s) : 0;
     return {...s, elapsed, remain};
   });
 
@@ -1212,6 +1250,7 @@ function renderSessions() {
 }
 
 // Step 1 when Rush Hour countdown hits 0:
+// Shows "I'm Still Seated" / "I'm Leaving" -> after 5s sends device notification -> after +5s (10s total) auto-vacates
 function triggerRushPrompt() {
   if (!userActiveSession || userActiveSession.timesUp) return;
 
@@ -1219,31 +1258,25 @@ function triggerRushPrompt() {
     userActiveSession.rushPromptActive = true;
     userActiveSession.rushPromptStartedAt = Date.now();
     userActiveSession.rushPromptNotified = false;
-    $('rushPromptStatusBadge').className = 'inline-block px-3 py-1 rounded-full bg-maroon-100 text-maroon-900 text-xs font-black uppercase tracking-wider mb-2';
+    $('rushPromptStatusBadge').className = 'inline-block px-3 py-1 rounded-full bg-amber-100 text-amber-900 text-xs font-black uppercase tracking-wider mb-2';
     $('rushPromptStatusBadge').textContent = 'Rush Hour Countdown Ended';
     $('rushPromptCountdown').textContent = RUSH_PROMPT_TOTAL_SEC + 's';
-
-    openDialog('rushPromptDialog');
-    startAlertSound();
-    sendDeviceNotification(
-      "VaCanteen: Are You Still Seated?",
-      "Your rush hour timer is over! Tap 'I'm Still Seated' or 'I'm Leaving' before your seat is automatically vacated.",
-      'vacanteen-rush-prompt'
-    );
-  } else if (!$('rushPromptDialog').classList.contains('open')) {
-    openDialog('rushPromptDialog');
+    playReminderChime();
   }
 
   $('sessionTimerSubLabel').textContent = 'Countdown Ended - Awaiting Response';
   $('sessionClock').textContent = '00:00:00';
+
+  if (!$('rushPromptDialog').classList.contains('open')) {
+    openDialog('rushPromptDialog');
+  }
 }
 
-// Step 2 if user clicks "I'm Still Seated": 30-second Time's Up popup -> auto-vacate (NO notification sound)
+// Step 2 if user clicks "I'm Still Seated": 30-second Time's Up popup -> auto-vacate
 function triggerTimesUp() {
   if (!userActiveSession) return;
 
   userActiveSession.rushPromptActive = false;
-  stopAlertSound();
 
   if (!userActiveSession.timesUp) {
     userActiveSession.timesUp = true;
@@ -1260,14 +1293,14 @@ function triggerTimesUp() {
       })
     }).catch(err => console.error('Keepalive error:', err));
 
-    openDialog('timesUpDialog');
     sendDeviceNotification(
       "VaCanteen: Time's Up!",
-      "Your rush hour dining window has ended. Please wrap up — your table will automatically vacate in 30 seconds.",
-      'vacanteen-times-up',
-      true
+      'Your rush hour dining window has ended. Your table will automatically vacate in 30 seconds.',
+      'vacanteen-times-up'
     );
-  } else if (!$('timesUpDialog').classList.contains('open')) {
+  }
+
+  if (!$('timesUpDialog').classList.contains('open')) {
     openDialog('timesUpDialog');
   }
 }
@@ -1330,8 +1363,10 @@ function updateSeatSelectionState() {
   }
 }
 
-function releaseSession(sessionToRelease, noticeMessage = '') {
+function releaseSession(sessionToRelease, noticeMessage = '', promptFeedback = true) {
   if (!sessionToRelease) return;
+
+  const isMyOwnSession = Boolean(userActiveSession && userActiveSession.id === sessionToRelease.id);
 
   fetch('/api/leave', {
     method: 'POST',
@@ -1355,7 +1390,7 @@ function releaseSession(sessionToRelease, noticeMessage = '') {
     t.occupied = t.occupiedSeats.length;
   }
 
-  if (userActiveSession && userActiveSession.id === sessionToRelease.id) {
+  if (isMyOwnSession) {
     userActiveSession = null;
     pendingSession = null;
     localStorage.removeItem('vacanteen_my_session');
@@ -1370,6 +1405,10 @@ function releaseSession(sessionToRelease, noticeMessage = '') {
 
   if (noticeMessage) {
     showNotice(noticeMessage);
+  }
+
+  if (promptFeedback && isMyOwnSession) {
+    openFeedbackDialog();
   }
 }
 
@@ -1405,17 +1444,6 @@ function syncFromServer() {
       if (savedMyId) {
         const foundMine = sessions.find(s => s.id === savedMyId);
         if (foundMine) {
-          if (userActiveSession) {
-            foundMine.checkCycle = userActiveSession.checkCycle || 1;
-            foundMine.resumedBaseSec = userActiveSession.resumedBaseSec || 0;
-            foundMine.resumedAtMs = userActiveSession.resumedAtMs || foundMine.startedAt;
-            foundMine.frozenElapsedSec = userActiveSession.frozenElapsedSec;
-          } else {
-            foundMine.checkCycle = 1;
-            foundMine.resumedBaseSec = 0;
-            foundMine.resumedAtMs = foundMine.startedAt;
-          }
-
           if (userActiveSession && userActiveSession.timesUp) {
             foundMine.timesUp = true;
             foundMine.timesUpDeadline = userActiveSession.timesUpDeadline;
@@ -1436,9 +1464,7 @@ function syncFromServer() {
           } else if (Number(foundMine.duration) === 0 && foundMine.expire_time) {
             const windowSec = foundMine.expire_time - ((foundMine.lastConfirmedAt || foundMine.startedAt) / 1000);
             if (windowSec > 0 && windowSec <= WRAP_UP_SECONDS + 5) {
-              const targetSec = (foundMine.checkCycle || 1) * REGULAR_IDLE_PROMPT_SEC;
               foundMine.wrappingUp = true;
-              foundMine.frozenElapsedSec = targetSec;
               foundMine.wrapUpDeadline = foundMine.expire_time * 1000;
             }
           }
@@ -1459,12 +1485,16 @@ function syncFromServer() {
             restoreSeatedSessionModal(foundMine);
           }
         } else {
+          const hadActiveSession = Boolean(userActiveSession);
           userActiveSession = null;
           pendingSession = null;
           localStorage.removeItem('vacanteen_my_session');
           $('sessionCloseBtn').classList.remove('hidden');
           $('backToSeats').classList.remove('hidden');
           closeDialogs(true);
+          if (hadActiveSession) {
+            openFeedbackDialog();
+          }
         }
       }
       renderMap();
@@ -1479,10 +1509,6 @@ window.addEventListener('DOMContentLoaded', () => {
   setInterval(syncFromServer, 5000);
 
   $('closeNoticeBtn').addEventListener('click', () => {
-    if (noticeTimeout) {
-      clearTimeout(noticeTimeout);
-      noticeTimeout = null;
-    }
     $('systemNotice').classList.add('hidden');
   });
 
@@ -1517,20 +1543,21 @@ window.addEventListener('DOMContentLoaded', () => {
         $('sessionClock').textContent = '00:00:00';
         $('rushPromptCountdown').textContent = remainPromptSec + 's';
 
+        // After 5 seconds of no response, fire a device notification reminder
         if (elapsedPromptMs >= RUSH_PROMPT_NOTIFY_SEC * 1000 && !userActiveSession.rushPromptNotified) {
           userActiveSession.rushPromptNotified = true;
-          $('rushPromptStatusBadge').className = 'inline-block px-3 py-1 rounded-full bg-maroon-800 text-white text-xs font-black uppercase tracking-wider mb-2 animate-pulse';
-          $('rushPromptStatusBadge').textContent = '🔔 Final Reminder — 5s Left';
+          $('rushPromptStatusBadge').className = 'inline-block px-3 py-1 rounded-full bg-rose-100 text-rose-900 text-xs font-black uppercase tracking-wider mb-2 animate-pulse';
+          $('rushPromptStatusBadge').textContent = '🔔 Device Reminder Sent — 5s Left';
 
           sendDeviceNotification(
-            "VaCanteen Final Reminder: Are You Still Seated?",
+            "VaCanteen Reminder: Are You Still Seated?",
             "You haven't responded yet! Tap 'I'm Still Seated' or 'I'm Leaving' within 5 seconds or your seat will be automatically vacated.",
             'vacanteen-rush-prompt-reminder'
           );
         }
 
+        // After another 5 seconds (10 seconds total) with still no response, auto-vacate
         if (elapsedPromptMs >= RUSH_PROMPT_TOTAL_SEC * 1000) {
-          stopAlertSound();
           releaseSession(
             userActiveSession,
             'No response after device reminder. Your table has been automatically vacated.'
@@ -1538,15 +1565,15 @@ window.addEventListener('DOMContentLoaded', () => {
         }
       } else if (userActiveSession.wrappingUp) {
         const remain = Math.max(0, Math.ceil((userActiveSession.wrapUpDeadline - Date.now()) / 1000));
-        $('sessionTimerSubLabel').textContent = 'Check-Up Paused';
-        $('sessionClock').textContent = fmtTime(getRegularElapsedSeconds(userActiveSession));
+        $('sessionTimerSubLabel').textContent = 'Wrapping Up - Auto Release In';
+        $('sessionClock').textContent = fmtTime(remain);
         $('wrapUpCountdown').textContent = remain + 's';
 
         if (remain <= 0) {
           stopAlertSound();
           releaseSession(
             userActiveSession,
-            'No response during the 30-second check-up. Your table has been automatically released.'
+            'Your 30-second wrap-up time has ended. Your table has been automatically released.'
           );
         }
       } else if (rush) {
@@ -1557,18 +1584,17 @@ window.addEventListener('DOMContentLoaded', () => {
           triggerRushPrompt();
         }
       } else {
-        const cycle = userActiveSession.checkCycle || 1;
-        const targetSec = cycle * REGULAR_IDLE_PROMPT_SEC; // 180s (3:00), 360s (6:00), 540s (9:00)...
-        const elapsedSec = getRegularElapsedSeconds(userActiveSession);
+        $('sessionTimerSubLabel').textContent = 'Elapsed Seating Time';
+        const elapsed = Math.max(0, (Date.now() - userActiveSession.startedAt) / 1000);
+        $('sessionClock').textContent = fmtTime(elapsed);
 
-        if (elapsedSec >= targetSec) {
+        const lastConfirm = userActiveSession.lastConfirmedAt || userActiveSession.startedAt;
+        const sinceConfirmSec = (Date.now() - lastConfirm) / 1000;
+
+        if (sinceConfirmSec >= REGULAR_IDLE_PROMPT_SEC) {
           const nowMs = Date.now();
           userActiveSession.wrappingUp = true;
-          userActiveSession.frozenElapsedSec = targetSec; // Locks display on exact 00:03:00, 00:06:00, etc.
           userActiveSession.wrapUpDeadline = nowMs + WRAP_UP_SECONDS * 1000;
-
-          $('sessionTimerSubLabel').textContent = 'Check-Up Paused';
-          $('sessionClock').textContent = fmtTime(targetSec);
 
           fetch('/api/keepalive', {
             method: 'POST',
@@ -1581,13 +1607,10 @@ window.addEventListener('DOMContentLoaded', () => {
           startAlertSound();
 
           sendDeviceNotification(
-            "VaCanteen: Are You Still Seated?",
-            `You've been seated for ${cycle * 3} minutes. Tap 'I'm Still Here' to continue your timer or 'I Already Left' within 30 seconds.`,
+            "VaCanteen: Forgot to tap 'I'm Leaving'?",
+            "Your 3-minute timer is over! Please tap 'I'm Leaving' — you have a 30-second wrap-up time before your seat is released.",
             'vacanteen-regular-wrapup'
           );
-        } else {
-          $('sessionTimerSubLabel').textContent = 'Elapsed Seating Time';
-          $('sessionClock').textContent = fmtTime(elapsedSec);
         }
       }
     }
@@ -1744,9 +1767,6 @@ window.addEventListener('DOMContentLoaded', () => {
       selectedSeatNumbers: chosenSeatsSorted,
       startedAt: nowMs,
       lastConfirmedAt: nowMs,
-      checkCycle: 1,
-      resumedBaseSec: 0,
-      resumedAtMs: nowMs,
       duration: rush ? duration : 0,
       seated: false
     };
@@ -1772,15 +1792,13 @@ window.addEventListener('DOMContentLoaded', () => {
     if (!pendingSession || pendingSession.seated) return;
     if (available(selectedTable) < pendingSession.seats) return;
 
+    // Ask during this deliberate user action so browsers can show the permission prompt.
     requestDeviceNotificationPermission();
 
     const nowMs = Date.now();
     pendingSession.seated = true;
     pendingSession.startedAt = nowMs;
     pendingSession.lastConfirmedAt = nowMs;
-    pendingSession.checkCycle = 1;
-    pendingSession.resumedBaseSec = 0;
-    pendingSession.resumedAtMs = nowMs;
 
     userActiveSession = pendingSession;
     localStorage.setItem('vacanteen_my_session', pendingSession.id);
@@ -1822,20 +1840,17 @@ window.addEventListener('DOMContentLoaded', () => {
 
   // Rush Hour Prompt Actions ("I'm Still Seated" vs "I'm Leaving")
   $('stillSeatedRushBtn').addEventListener('click', () => {
-    stopAlertSound();
     if (!userActiveSession) return;
     triggerTimesUp();
   });
 
   $('leaveFromRushPromptBtn').addEventListener('click', () => {
-    stopAlertSound();
     if (userActiveSession) {
       releaseSession(userActiveSession, 'Thank you! Your table has been released.');
     }
   });
 
   $('dismissTimesUp').addEventListener('click', () => {
-    stopAlertSound();
     if (userActiveSession) {
       releaseSession(userActiveSession, 'Thank you! Your table has been vacated.');
     } else {
@@ -1843,46 +1858,55 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Regular Hours 3-Minute Check-Up Actions ("I'm Still Here" vs "I Already Left")
-  $('stillHereRegularBtn').addEventListener('click', () => {
-    stopAlertSound();
-    if (!userActiveSession) return;
-
-    const nowMs = Date.now();
-    const completedCycle = userActiveSession.checkCycle || 1;
-    const pausedSec = typeof userActiveSession.frozenElapsedSec === 'number'
-      ? userActiveSession.frozenElapsedSec
-      : (completedCycle * REGULAR_IDLE_PROMPT_SEC);
-
-    // Resume at +1s (e.g., 00:03:00 -> 00:03:01, 00:06:00 -> 00:06:01) and schedule next check-up +3 mins later
-    userActiveSession.wrappingUp = false;
-    userActiveSession.frozenElapsedSec = null;
-    userActiveSession.wrapUpDeadline = null;
-    userActiveSession.lastConfirmedAt = nowMs;
-    userActiveSession.resumedBaseSec = pausedSec + 1;
-    userActiveSession.resumedAtMs = nowMs;
-    userActiveSession.checkCycle = completedCycle + 1;
-
-    fetch('/api/keepalive', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        id: userActiveSession.id,
-        extra_seconds: REGULAR_IDLE_PROMPT_SEC + 60
-      })
-    }).catch(err => console.error('Keepalive error:', err));
-
-    openDialog('sessionDialog');
-    restoreSeatedSessionModal(userActiveSession);
-    renderSessions();
-  });
-
-  $('alreadyLeftRegularBtn').addEventListener('click', () => {
+  $('leaveFromWrapUp').addEventListener('click', () => {
     stopAlertSound();
     if (userActiveSession) {
       releaseSession(userActiveSession, 'Thank you! Your table has been released.');
     }
   });
+
+  $('acknowledgeWrapUp').addEventListener('click', () => {
+    stopAlertSound();
+    if (!userActiveSession) return;
+    openDialog('sessionDialog');
+    restoreSeatedSessionModal(userActiveSession);
+  });
+
+  // 5-Star Feedback Modal Interactions
+  document.querySelectorAll('.feedback-star').forEach(btn => {
+    btn.addEventListener('mouseenter', () => {
+      updateStarDisplay(Number(btn.dataset.star));
+    });
+
+    btn.addEventListener('click', () => {
+      selectedFeedbackStars = Number(btn.dataset.star);
+      updateStarDisplay(selectedFeedbackStars);
+      $('feedbackRatingLabel').textContent = FEEDBACK_LABELS[selectedFeedbackStars];
+      $('submitFeedbackBtn').disabled = false;
+    });
+  });
+
+  $('starRatingGroup').addEventListener('mouseleave', () => {
+    updateStarDisplay(selectedFeedbackStars);
+  });
+
+  $('submitFeedbackBtn').addEventListener('click', () => {
+    if (!selectedFeedbackStars) return;
+    try {
+      const existing = JSON.parse(localStorage.getItem('vacanteen_feedback') || '[]');
+      existing.push({
+        rating: selectedFeedbackStars,
+        submittedAt: new Date().toISOString()
+      });
+      localStorage.setItem('vacanteen_feedback', JSON.stringify(existing));
+    } catch (e) {}
+
+    closeDialogs(true);
+    showNotice(`Thank you for your ${selectedFeedbackStars}-star feedback!`);
+  });
+
+  $('skipFeedbackBtn').addEventListener('click', () => closeDialogs(true));
+  $('closeFeedbackBtn').addEventListener('click', () => closeDialogs(true));
 
 });
 </script>
